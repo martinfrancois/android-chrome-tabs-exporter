@@ -1,6 +1,5 @@
 package com.github.martinfrancois;
 
-import javafx.scene.control.Separator;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
