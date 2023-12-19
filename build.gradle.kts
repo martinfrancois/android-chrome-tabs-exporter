@@ -23,6 +23,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.withType<JavaCompile> {
+    options.release = 21
+}
+
 tasks.jar {
     manifest.attributes["Main-Class"] = "com.github.martinfrancois.Main"
 }
