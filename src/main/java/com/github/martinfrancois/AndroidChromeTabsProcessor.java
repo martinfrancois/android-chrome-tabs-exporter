@@ -5,10 +5,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.TreeSet;
-
-import static com.github.martinfrancois.Constants.*;
 
 public class AndroidChromeTabsProcessor {
 
@@ -25,8 +22,8 @@ public class AndroidChromeTabsProcessor {
 
             for (int i = 0; i < tabsArray.length(); i++) {
                 JSONObject tab = tabsArray.getJSONObject(i);
-                String title = tab.optString(KEY_TITLE);
-                String url = tab.optString(KEY_URL);
+                String title = tab.optString("title");
+                String url = tab.optString("url");
 
                 if (title.isBlank() && url.isBlank()) {
                     continue;
