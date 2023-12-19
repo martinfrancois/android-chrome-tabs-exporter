@@ -138,7 +138,7 @@ public class Main {
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 // only extract the adb executable
                 if (zipEntry.getName().endsWith(adbExecutableName)) {
-                    Path adbExecutable = Paths.get(String.valueOf(tempDir), "adb");
+                    Path adbExecutable = Paths.get(String.valueOf(tempDir), adbExecutableName);
                     Files.copy(zipInputStream, adbExecutable, StandardCopyOption.REPLACE_EXISTING);
                     // fix permission issues when not running on Windows
                     if (!OperatingSystem.isWindows()) {
