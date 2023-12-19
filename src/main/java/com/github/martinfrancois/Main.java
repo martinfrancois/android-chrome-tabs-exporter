@@ -1,5 +1,6 @@
 package com.github.martinfrancois;
 
+import com.github.martinfrancois.model.Tab;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -29,7 +30,7 @@ public class Main {
         try (AdbHandler adbHandler = new AdbHandler()) {
             adbHandler.forwardPortToChromeDevtools(ADB_PORT);
             String tabsJson = RequestHandler.get("http://localhost:" + ADB_PORT + "/json/list");
-            TreeSet<Map<String, String>> sortedTabs = AndroidChromeTabsProcessor.toTreeSet(tabsJson);
+            TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(tabsJson);
 
             try (Workbook workbook = new XSSFWorkbook()) {
                 Sheet sheet = workbook.createSheet(EXCEL_SHEET_NAME);
@@ -50,13 +51,13 @@ public class Main {
 
                 // Write sorted data to the sheet
                 int rowNumber = 1; // Start from the next row after the header
-                for (Map<String, String> tab : sortedTabs) {
+                for (Tab tab : tabs) {
                     Row dataRow = sheet.createRow(rowNumber++);
                     Cell cellTitle = dataRow.createCell(0);
                     Cell cellUrl = dataRow.createCell(1);
 
-                    cellTitle.setCellValue(tab.get(HEADER_TITLE));
-                    cellUrl.setCellValue(tab.get(HEADER_URL));
+                    cellTitle.setCellValue(tab.title());
+                    cellUrl.setCellValue(tab.url());
                 }
 
                 // Create a table
