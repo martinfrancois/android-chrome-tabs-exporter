@@ -8,18 +8,13 @@ import org.json.JSONObject;
 
 import java.io.*;
 import java.net.ConnectException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFilePermission;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 public class Main {
 
@@ -30,7 +25,6 @@ public class Main {
     public static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
     public static final String FILENAME_SUFFIX = " Android Tabs";
     public static final String EXCEL_SHEET_NAME = "Tabs";
-    public static final String PLATFORM_TOOLS_PREFIX = "https://dl.google.com/android/repository/platform-tools-latest-";
     public static final String ADB_PORT = "9222";
 
     public static void main(String[] args) {
@@ -41,17 +35,8 @@ public class Main {
             return;
         }
 
-        File adbExecutable = null;
-        try {
-            adbExecutable = downloadAdbExecutable();
-
-            if (adbExecutable == null || !adbExecutable.exists()) {
-                System.err.println("Failed to download ADB executable.");
-                System.exit(1);
-            }
-
-            executeAdbCommand(adbExecutable);
-
+        try (AdbHandler adbHandler = new AdbHandler()) {
+            adbHandler.forwardPortToChromeDevtools(ADB_PORT);
             String tabsJson = makeHttpRequest("http://localhost:" + ADB_PORT + "/json/list");
 
             if (tabsJson != null && !tabsJson.isEmpty()) {
@@ -113,87 +98,6 @@ public class Main {
                     throw new UncheckedIOException(e);
                 }
             }
-        } finally {
-            // Cleanup: Delete the ADB executable
-            if (adbExecutable == null || !adbExecutable.delete()) {
-                System.err.println("Failed to delete ADB executable.");
-                System.exit(1);
-            }
-        }
-    }
-
-    private static File downloadAdbExecutable() {
-        String adbExecutableName = getAdbExecutableName();
-        String adbDownloadUrl = getAdbDownloadUrl();
-        ZipEntry zipEntry;
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-
-        try (InputStream in = URI.create(adbDownloadUrl).toURL().openStream();
-             ZipInputStream zipInputStream = new ZipInputStream(in)) {
-            while ((zipEntry = zipInputStream.getNextEntry()) != null) {
-                // only extract the adb executable
-                if (zipEntry.getName().endsWith(adbExecutableName)) {
-                    Path adbExecutable = Paths.get(String.valueOf(tempDir), adbExecutableName);
-                    Files.copy(zipInputStream, adbExecutable, StandardCopyOption.REPLACE_EXISTING);
-                    // fix permission issues when not running on Windows
-                    if (!OperatingSystem.isWindows()) {
-                        Set<PosixFilePermission> perms = Files.getPosixFilePermissions(adbExecutable);
-                        perms.add(PosixFilePermission.OWNER_EXECUTE);
-                        Files.setPosixFilePermissions(adbExecutable, perms);
-                    }
-                    return adbExecutable.toFile();
-                }
-            }
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-        return null;
-    }
-
-    private static String getAdbExecutableName() {
-        return OperatingSystem.isWindows() ? "adb.exe" : "adb";
-    }
-
-    private static String getAdbDownloadUrl() {
-        if (OperatingSystem.isWindows()) {
-            return PLATFORM_TOOLS_PREFIX + "windows.zip";
-        } else if (OperatingSystem.isMac()) {
-            return PLATFORM_TOOLS_PREFIX + "darwin.zip";
-        } else {
-            return PLATFORM_TOOLS_PREFIX + "linux.zip";
-        }
-    }
-
-    private static void executeAdbCommand(File adbExecutable) {
-        try {
-            Process process = new ProcessBuilder(adbExecutable.getAbsolutePath(), "forward", "tcp:" + ADB_PORT, "localabstract:chrome_devtools_remote")
-                    .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                    .redirectError(ProcessBuilder.Redirect.PIPE)
-                    .start();
-
-            // Read the output and error streams
-            String output = readStream(process.getInputStream());
-            String error = readStream(process.getErrorStream());
-
-            // Wait for the process to finish
-            int exitCode = process.waitFor();
-
-            if (error.contains("no devices/emulators found")) {
-                System.err.println("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging.");
-                System.exit(1);
-            }
-            if (!((ADB_PORT.equals(output) || output.isEmpty()) && exitCode == 0) && !error.isEmpty()) {
-                System.err.println("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
-                System.exit(1);
-            }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private static String readStream(InputStream inputStream) {
-        try (Scanner scanner = new Scanner(inputStream, StandardCharsets.UTF_8)) {
-            return scanner.useDelimiter("\\A").hasNext() ? scanner.next() : "";
         }
     }
 
