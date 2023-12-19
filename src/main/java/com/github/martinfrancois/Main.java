@@ -7,11 +7,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.*;
-import java.net.ConnectException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -37,7 +32,7 @@ public class Main {
 
         try (AdbHandler adbHandler = new AdbHandler()) {
             adbHandler.forwardPortToChromeDevtools(ADB_PORT);
-            String tabsJson = makeHttpRequest("http://localhost:" + ADB_PORT + "/json/list");
+            String tabsJson = RequestHandler.get("http://localhost:" + ADB_PORT + "/json/list");
 
             if (tabsJson != null && !tabsJson.isEmpty()) {
                 JSONArray tabArray = new JSONArray(tabsJson);
@@ -99,29 +94,6 @@ public class Main {
                 }
             }
         }
-    }
-
-    private static String makeHttpRequest(String url) {
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(java.net.URI.create(url))
-                .GET()
-                .build();
-        try (HttpClient httpClient = HttpClient.newHttpClient()){
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            if (response.statusCode() == 200) {
-                return response.body();
-            } else {
-                System.err.println("HTTP Request failed with status code: " + response.statusCode());
-                System.exit(1);
-            }
-        } catch (ConnectException e) {
-            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging.");
-            System.exit(1);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-        return null;
     }
 
     private static String generateFileName(String[] path) {
