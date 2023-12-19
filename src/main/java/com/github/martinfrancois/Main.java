@@ -89,13 +89,13 @@ public class Main {
 
                 // Write sorted data to the sheet
                 int rowNumber = 1; // Start from the next row after the header
-                for (Map<String, String> entry : sortedTabs) {
+                for (Map<String, String> tab : sortedTabs) {
                     Row dataRow = sheet.createRow(rowNumber++);
                     Cell cellTitle = dataRow.createCell(0);
                     Cell cellUrl = dataRow.createCell(1);
 
-                    cellTitle.setCellValue(entry.get(HEADER_TITLE));
-                    cellUrl.setCellValue(entry.get(HEADER_URL));
+                    cellTitle.setCellValue(tab.get(HEADER_TITLE));
+                    cellUrl.setCellValue(tab.get(HEADER_URL));
                 }
 
                 // Create a table
