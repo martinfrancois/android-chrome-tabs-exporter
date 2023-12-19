@@ -103,12 +103,10 @@ public class Main {
                 int lastColNum = headerRow.getLastCellNum() - 1;
                 sheet.setAutoFilter(new CellRangeAddress(0, lastRowNum, 0, lastColNum));
 
-                try {
-                    String fileName = generateFileName(args);
-                    try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
-                        workbook.write(fileOut);
-                        System.out.println("Excel file created successfully: " + fileName);
-                    }
+                String fileName = generateFileName(args);
+                try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
+                    workbook.write(fileOut);
+                    System.out.println("Excel file created successfully: " + fileName);
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
                 } finally {
