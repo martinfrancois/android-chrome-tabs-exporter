@@ -106,8 +106,7 @@ public class Main {
                 .uri(java.net.URI.create(url))
                 .GET()
                 .build();
-        try {
-            HttpClient httpClient = HttpClient.newHttpClient();
+        try (HttpClient httpClient = HttpClient.newHttpClient()){
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
             if (response.statusCode() == 200) {
