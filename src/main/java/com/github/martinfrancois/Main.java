@@ -35,7 +35,9 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length == 0) {
-            System.out.println("Please provide a path to a folder in which to save the Excel file with the tabs. For example: java -jar android-tabs.jar /home/user");
+            System.out.println("Please provide a path to a folder in which to save the Excel file with the tabs. " +
+                    "If your path contains spaces, please wrap the path in quotation marks." +
+                    "For example: java -jar android-chrome-tabs-exporter.jar \"/home/user/my folder\"");
             return;
         }
 
