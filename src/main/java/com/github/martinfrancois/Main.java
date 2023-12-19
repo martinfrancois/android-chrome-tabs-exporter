@@ -69,55 +69,48 @@ public class Main {
                     sortedTabs.add(Map.of(HEADER_TITLE, title, HEADER_URL, url));
                 }
 
-                // Create workbook and sheet
-                Workbook workbook = new XSSFWorkbook();
-                Sheet sheet = workbook.createSheet(EXCEL_SHEET_NAME);
+                try (Workbook workbook = new XSSFWorkbook()) {
+                    Sheet sheet = workbook.createSheet(EXCEL_SHEET_NAME);
 
-                // Adding header row
-                Row headerRow = sheet.createRow(0);
-                Cell headerTitle = headerRow.createCell(0);
-                Cell headerUrl = headerRow.createCell(1);
-                headerTitle.setCellValue(HEADER_TITLE);
-                headerUrl.setCellValue(HEADER_URL);
+                    // Adding header row
+                    Row headerRow = sheet.createRow(0);
+                    Cell headerTitle = headerRow.createCell(0);
+                    Cell headerUrl = headerRow.createCell(1);
+                    headerTitle.setCellValue(HEADER_TITLE);
+                    headerUrl.setCellValue(HEADER_URL);
 
-                CellStyle headerStyle = workbook.createCellStyle();
-                headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
-                headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+                    CellStyle headerStyle = workbook.createCellStyle();
+                    headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+                    headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
 
-                headerTitle.setCellStyle(headerStyle);
-                headerUrl.setCellStyle(headerStyle);
+                    headerTitle.setCellStyle(headerStyle);
+                    headerUrl.setCellStyle(headerStyle);
 
-                // Write sorted data to the sheet
-                int rowNumber = 1; // Start from the next row after the header
-                for (Map<String, String> tab : sortedTabs) {
-                    Row dataRow = sheet.createRow(rowNumber++);
-                    Cell cellTitle = dataRow.createCell(0);
-                    Cell cellUrl = dataRow.createCell(1);
+                    // Write sorted data to the sheet
+                    int rowNumber = 1; // Start from the next row after the header
+                    for (Map<String, String> tab : sortedTabs) {
+                        Row dataRow = sheet.createRow(rowNumber++);
+                        Cell cellTitle = dataRow.createCell(0);
+                        Cell cellUrl = dataRow.createCell(1);
 
-                    cellTitle.setCellValue(tab.get(HEADER_TITLE));
-                    cellUrl.setCellValue(tab.get(HEADER_URL));
-                }
+                        cellTitle.setCellValue(tab.get(HEADER_TITLE));
+                        cellUrl.setCellValue(tab.get(HEADER_URL));
+                    }
 
-                // Create a table
-                int lastRowNum = sheet.getLastRowNum();
-                int lastColNum = headerRow.getLastCellNum() - 1;
-                sheet.setAutoFilter(new CellRangeAddress(0, lastRowNum, 0, lastColNum));
+                    // Create a table
+                    int lastRowNum = sheet.getLastRowNum();
+                    int lastColNum = headerRow.getLastCellNum() - 1;
+                    sheet.setAutoFilter(new CellRangeAddress(0, lastRowNum, 0, lastColNum));
 
-                String fileName = generateFileName(args);
-                try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
-                    workbook.write(fileOut);
-                    System.out.println("Excel file created successfully: " + fileName);
+                    String fileName = generateFileName(args);
+                    try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
+                        workbook.write(fileOut);
+                        System.out.println("Excel file created successfully: " + fileName);
+                    }
                 } catch (IOException e) {
                     throw new UncheckedIOException(e);
-                } finally {
-                    try {
-                        workbook.close();
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
                 }
             }
-
         } finally {
             // Cleanup: Delete the ADB executable
             if (adbExecutable == null || !adbExecutable.delete()) {
