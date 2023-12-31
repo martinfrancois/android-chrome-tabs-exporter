@@ -2,8 +2,6 @@ name: build
 
 on:
   push:
-    branches:
-      - '*'
 
 jobs:
   build:
@@ -24,7 +22,7 @@ jobs:
           ./gradlew shadowJar
 
       - name: Upload artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v4
         with:
           name: executable-jar
