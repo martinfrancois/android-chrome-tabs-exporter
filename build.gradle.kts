@@ -17,7 +17,7 @@ dependencies {
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.assertj:assertj-core:3.25.0")
+    testImplementation("org.assertj:assertj-core:3.25.1")
 }
 
 tasks.test {
