@@ -31,10 +31,8 @@ public class RequestHandler {
                 System.err.println("HTTP Request failed with status code: " + response.statusCode());
                 System.exit(1);
             }
-        } catch (ConnectException e) {
-            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging.");
-            System.exit(1);
-        } catch (IOException | InterruptedException e) {
+        } catch (Exception e) {
+            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled and you allowed USB debugging.");
             throw new RuntimeException(e);
         }
         return null;
