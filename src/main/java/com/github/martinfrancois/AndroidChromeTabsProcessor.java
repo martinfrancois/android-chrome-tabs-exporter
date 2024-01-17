@@ -28,9 +28,20 @@ public class AndroidChromeTabsProcessor {
                 if (title.isBlank() && url.isBlank()) {
                     continue;
                 }
-                tabs.add(new Tab(title, url));
+                tabs.add(new Tab(title, removeWww(url)));
             }
         }
         return tabs;
+    }
+
+    /**
+     * Removes the "www." from the beginning of the URL.
+     * This makes the URLs more consistent, which ensures
+     * that the URLs are sorted and deduplicated correctly.
+     * @param url to remove the "www." from
+     * @return the URL without the "www."
+     */
+    private static String removeWww(String url) {
+        return url.replaceAll("(?i)^(https?://)www\\.", "$1");
     }
 }
