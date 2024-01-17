@@ -122,7 +122,7 @@ public class AdbHandler implements AutoCloseable {
                 } else if (error.contains("device unauthorized")) {
                     System.err.println("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
                     retry();
-                } else if (!((adbPort.equals(output) || output.isEmpty()) && exitCode == 0) && !error.isEmpty()) {
+                } else if (!((adbPort.equals(output.trim()) || output.isBlank()) && exitCode == 0) && !error.isBlank()) {
                     System.err.println("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
                     System.exit(1);
                 }
