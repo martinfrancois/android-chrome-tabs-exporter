@@ -19,6 +19,7 @@ public class AndroidChromeTabsProcessor {
 
         if (tabsJson != null && !tabsJson.isEmpty()) {
             JSONArray tabsArray = new JSONArray(tabsJson);
+            System.out.println("Found " + tabsArray.length() + " tabs.");
 
             for (int i = 0; i < tabsArray.length(); i++) {
                 JSONObject tab = tabsArray.getJSONObject(i);
