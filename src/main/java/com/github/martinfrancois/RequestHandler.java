@@ -32,7 +32,7 @@ public class RequestHandler {
                 System.exit(1);
             }
         } catch (Exception e) {
-            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled and you allowed USB debugging.");
+            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled and you allowed USB debugging. You can also try reconnecting your phone or opening up Chrome.");
             throw new RuntimeException(e);
         }
         return null;
