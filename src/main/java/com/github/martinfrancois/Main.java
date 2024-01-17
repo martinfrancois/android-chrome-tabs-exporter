@@ -10,14 +10,14 @@ import java.util.*;
 public class Main {
     private static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
     private static final String FILENAME_SUFFIX = " Android Tabs";
-    private static final String ADB_PORT = "9222";
+    private static final String DEFAULT_ADB_PORT = "9222";
 
     public static void main(String[] args) {
         String excelFolderPath = getFolderPath(args);
 
         try (AdbHandler adbHandler = new AdbHandler()) {
-            adbHandler.forwardPortToChromeDevtools(ADB_PORT);
-            String tabsJson = RequestHandler.get("http://localhost:" + ADB_PORT + "/json/list");
+            String port = adbHandler.forwardPortToChromeDevtools(DEFAULT_ADB_PORT);
+            String tabsJson = RequestHandler.get("http://localhost:" + port + "/json/list");
             TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(tabsJson);
 
             String fileName = generateFileName(excelFolderPath);

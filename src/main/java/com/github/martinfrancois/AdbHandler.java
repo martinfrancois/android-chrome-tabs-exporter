@@ -86,8 +86,15 @@ public class AdbHandler implements AutoCloseable {
         }
     }
 
-    public void forwardPortToChromeDevtools(String adbPort) {
+    /**
+     * Forwards the port to the chrome devtools.
+     * If the port is already in use, it will try the next port, until it finds one that is not in use.
+     * @param adbPort the port to forward to the chrome devtools
+     * @return the adb port that was forwarded to the chrome devtools
+     */
+    public String forwardPortToChromeDevtools(String adbPort) {
         do {
+            validatePort(adbPort);
             retry = false;
             try {
                 // prevent running into the error "cannot bind listener: Address already in use"
@@ -107,6 +114,11 @@ public class AdbHandler implements AutoCloseable {
                 if (error.contains("no devices/emulators found")) {
                     System.err.println("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging. Retrying in 3 seconds...");
                     retry();
+                } else if (error.contains("cannot bind listener: Address already in use")) {
+                    String nextPort = String.valueOf(Integer.parseInt(adbPort) + 1);
+                    System.out.println("Port " + adbPort + " is already in use, trying port " + nextPort + "...");
+                    adbPort = nextPort;
+                    retry(0);
                 } else if (error.contains("device unauthorized")) {
                     System.err.println("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
                     retry();
@@ -118,12 +130,24 @@ public class AdbHandler implements AutoCloseable {
                 throw new RuntimeException(e);
             }
         } while (retry);
+        return adbPort;
+    }
+
+    private static void validatePort(String portString) {
+        int port = Integer.parseInt(portString);
+        if (port < 0 || port > 0xFFFF) {
+            throw new IllegalArgumentException("port out of range:" + port);
+        }
+    }
+
+    private void retry(int timeMilliseconds) throws InterruptedException {
+        stopProcess();
+        retry = true;
+        Thread.sleep(timeMilliseconds);
     }
 
     private void retry() throws InterruptedException {
-        stopProcess();
-        retry = true;
-        Thread.sleep(3000);
+        retry(3000);
     }
 
     /**
