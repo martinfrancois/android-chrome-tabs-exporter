@@ -1,5 +1,9 @@
 package com.github.martinfrancois;
 
+import com.google.common.base.Throwables;
+import oshi.SystemInfo;
+import oshi.software.os.OSProcess;
+
 import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -10,6 +14,9 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -17,6 +24,7 @@ public class AdbHandler implements AutoCloseable {
     private static final String PLATFORM_TOOLS_PREFIX = "https://dl.google.com/android/repository/platform-tools-latest-";
     private final File adbExecutable;
     private Process process;
+    private boolean retry = false;
 
     public AdbHandler() {
         adbExecutable = downloadAdbExecutable();
@@ -79,28 +87,69 @@ public class AdbHandler implements AutoCloseable {
     }
 
     public void forwardPortToChromeDevtools(String adbPort) {
-        try {
-            process = new ProcessBuilder(adbExecutable.getAbsolutePath(), "forward", "tcp:" + adbPort, "localabstract:chrome_devtools_remote")
-                    .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                    .redirectError(ProcessBuilder.Redirect.PIPE)
-                    .start();
+        do {
+            retry = false;
+            try {
+                // prevent running into the error "cannot bind listener: Address already in use"
+                killAdbProcess();
 
-            String output = readStream(process.getInputStream());
-            String error = readStream(process.getErrorStream());
+                process = new ProcessBuilder(adbExecutable.getAbsolutePath(), "forward", "tcp:" + adbPort, "localabstract:chrome_devtools_remote")
+                        .redirectOutput(ProcessBuilder.Redirect.PIPE)
+                        .redirectError(ProcessBuilder.Redirect.PIPE)
+                        .start();
 
-            // Wait for the process to finish
-            int exitCode = process.waitFor();
+                String output = readStream(process.getInputStream());
+                String error = readStream(process.getErrorStream());
 
-            if (error.contains("no devices/emulators found")) {
-                System.err.println("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging.");
-                System.exit(1);
+                // Wait for the process to finish
+                int exitCode = process.waitFor();
+
+                if (error.contains("no devices/emulators found")) {
+                    System.err.println("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging. Retrying in 3 seconds...");
+                    retry();
+                } else if (error.contains("device unauthorized")) {
+                    System.err.println("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
+                    retry();
+                } else if (!((adbPort.equals(output) || output.isEmpty()) && exitCode == 0) && !error.isEmpty()) {
+                    System.err.println("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
+                    System.exit(1);
+                }
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException(e);
             }
-            if (!((adbPort.equals(output) || output.isEmpty()) && exitCode == 0) && !error.isEmpty()) {
-                System.err.println("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
-                System.exit(1);
+        } while (retry);
+    }
+
+    private void retry() throws InterruptedException {
+        stopProcess();
+        retry = true;
+        Thread.sleep(3000);
+    }
+
+    /**
+     * Synchronous, will wait for 30 seconds for adb to be killed,
+     * and otherwise will log an error and exit.
+     * When there is no such process, it will do nothing.
+     */
+    private void killAdbProcess() {
+        SystemInfo systemInfo = new SystemInfo();
+        var os = systemInfo.getOperatingSystem();
+        for (OSProcess process : os.getProcesses()) {
+            if (getAdbExecutableName().equals(process.getName())) {
+                System.out.println("Found running adb process, terminating the process...");
+                ProcessHandle.of(process.getProcessID()).ifPresent(procHandle -> {
+                    procHandle.destroy();
+                    try {
+                        procHandle.onExit().get(30, TimeUnit.SECONDS);
+                        System.out.println("Running adb process was successfully terminated");
+                    } catch (InterruptedException | ExecutionException e) {
+                        System.err.println("Unexpected error when attempting to terminate adb: " + Throwables.getStackTraceAsString(e));
+                    } catch (TimeoutException e) {
+                        System.err.println("Failed to terminate adb process within 30 seconds.");
+                    }
+                });
+                return;
             }
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -112,6 +161,7 @@ public class AdbHandler implements AutoCloseable {
     private void stopProcess() {
         if (process != null) {
             process.destroy();
+            process = null;
         }
     }
 

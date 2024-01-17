@@ -11,10 +11,12 @@ repositories {
 }
 
 dependencies {
+    implementation("com.google.guava:guava:33.0.0-jre")
     implementation("org.json:json:20231013") // JSON processing
     implementation("org.apache.poi:poi:5.2.5") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.2.5") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
+    implementation("com.github.oshi:oshi-core:6.4.11") // OS handling
     testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core:3.25.1")
