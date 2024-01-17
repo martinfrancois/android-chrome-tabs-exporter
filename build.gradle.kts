@@ -33,3 +33,7 @@ tasks.withType<JavaCompile> {
 tasks.jar {
     manifest.attributes["Main-Class"] = "com.github.martinfrancois.Main"
 }
+
+tasks.shadowJar {
+    archiveFileName.set("android-chrome-tabs-exporter.jar")
+}

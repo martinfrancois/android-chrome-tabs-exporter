@@ -6,4 +6,4 @@ To build an executable JAR file, run:
 ./gradlew shadowJar
 ```
 
-You can then find the JAR file in `build/libs/android-chrome-tabs-exporter-1.0-all.jar`.
+You can then find the JAR file in `build/libs/android-chrome-tabs-exporter.jar`.
