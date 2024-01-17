@@ -2,6 +2,8 @@ name: build
 
 on:
   push:
+    branches:
+      - master
 
 jobs:
   build:
@@ -21,9 +23,16 @@ jobs:
         run: |
           ./gradlew shadowJar
 
-      - name: Upload artifact
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date --utc +%Y-%m-%dT%H-%M-%SZ)"
+
+      - name: Create GitHub Release and Upload Artifact
         if: github.ref == 'refs/heads/master'
-        uses: actions/upload-artifact@v4
+        uses: softprops/action-gh-release@v1
         with:
-          name: executable-jar
-          path: build/libs/android-chrome-tabs-exporter*.jar
+          tag_name: ${{ steps.date.outputs.date }}
+          name: Release ${{ steps.date.outputs.date }}
+          files: ./build/libs/android-chrome-tabs-exporter*.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
