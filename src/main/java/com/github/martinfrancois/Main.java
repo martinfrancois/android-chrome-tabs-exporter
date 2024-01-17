@@ -10,7 +10,7 @@ import java.util.*;
 public class Main {
     private static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
     private static final String FILENAME_SUFFIX = " Android Tabs";
-    private static final String DEFAULT_ADB_PORT = "9222";
+    private static final String DEFAULT_ADB_PORT = "50000";
 
     public static void main(String[] args) {
         String excelFolderPath = getFolderPath(args);
