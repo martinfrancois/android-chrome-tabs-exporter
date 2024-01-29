@@ -19,7 +19,7 @@ dependencies {
     implementation("com.github.oshi:oshi-core:6.4.11") // OS handling
     testImplementation(platform("org.junit:junit-bom:5.10.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.assertj:assertj-core:3.25.1")
+    testImplementation("org.assertj:assertj-core:3.25.2")
 }
 
 tasks.test {
