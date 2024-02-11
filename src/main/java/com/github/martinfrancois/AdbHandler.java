@@ -93,13 +93,12 @@ public class AdbHandler implements AutoCloseable {
      * @return the adb port that was forwarded to the chrome devtools
      */
     public String forwardPortToChromeDevtools(String adbPort) {
+        // prevent running into the error "cannot bind listener: Address already in use"
+        killAdbProcess();
         do {
             validatePort(adbPort);
             retry = false;
             try {
-                // prevent running into the error "cannot bind listener: Address already in use"
-                killAdbProcess();
-
                 process = new ProcessBuilder(adbExecutable.getAbsolutePath(), "forward", "tcp:" + adbPort, "localabstract:chrome_devtools_remote")
                         .redirectOutput(ProcessBuilder.Redirect.PIPE)
                         .redirectError(ProcessBuilder.Redirect.PIPE)
