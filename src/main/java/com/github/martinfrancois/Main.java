@@ -2,10 +2,16 @@ package com.github.martinfrancois;
 
 import com.github.martinfrancois.model.Tab;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.TreeSet;
 
 public class Main {
     private static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
@@ -14,6 +20,7 @@ public class Main {
 
     public static void main(String[] args) {
         String excelFolderPath = getFolderPath(args);
+        validateFolderPath(excelFolderPath);
 
         try (AdbHandler adbHandler = new AdbHandler()) {
             String port = adbHandler.forwardPortToChromeDevtools(DEFAULT_ADB_PORT);
@@ -27,6 +34,18 @@ public class Main {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+        }
+    }
+
+    private static void validateFolderPath(String excelFolderPath) {
+        Path path = Paths.get(excelFolderPath);
+        if (!Files.exists(path)) {
+            System.err.println("The provided path does not exist: " + excelFolderPath);
+            System.exit(1);
+        }
+        if (!Files.isDirectory(path)) {
+            System.err.println("The provided path is not a folder: " + excelFolderPath);
+            System.exit(1);
         }
     }
 
