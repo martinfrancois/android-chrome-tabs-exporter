@@ -1,7 +1,5 @@
 package com.github.martinfrancois;
 
-import java.io.IOException;
-import java.net.ConnectException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -28,11 +26,10 @@ public class RequestHandler {
             if (response.statusCode() == 200) {
                 return response.body();
             } else {
-                System.err.println("HTTP Request failed with status code: " + response.statusCode());
-                System.exit(1);
+                Main.updateError.accept("HTTP Request failed with status code: " + response.statusCode());
             }
         } catch (Exception e) {
-            System.err.println("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled and you allowed USB debugging. You can also try reconnecting your phone or opening up Chrome.");
+            Main.updateError.accept("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled, you allowed USB debugging and the Chrome app is open. You can also try reconnecting your phone if none of this helps.");
             throw new RuntimeException(e);
         }
         return null;

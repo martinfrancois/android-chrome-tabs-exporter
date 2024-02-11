@@ -4,7 +4,10 @@ import com.google.common.base.Throwables;
 import oshi.SystemInfo;
 import oshi.software.os.OSProcess;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -81,8 +84,7 @@ public class AdbHandler implements AutoCloseable {
 
     private void validateAdbExecutable() {
         if (adbExecutable == null || !adbExecutable.exists()) {
-            System.err.println("Failed to download ADB executable.");
-            System.exit(1);
+            Main.updateError.accept("Failed to download ADB executable.");
         }
     }
 
@@ -111,19 +113,18 @@ public class AdbHandler implements AutoCloseable {
                 int exitCode = process.waitFor();
 
                 if (error.contains("no devices/emulators found")) {
-                    System.err.println("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging. Retrying in 3 seconds...");
+                    Main.updateError.accept("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging. Retrying in 3 seconds...");
                     retry();
                 } else if (error.contains("cannot bind listener: Address already in use")) {
                     String nextPort = String.valueOf(Integer.parseInt(adbPort) + 1);
-                    System.out.println("Port " + adbPort + " is already in use, trying port " + nextPort + "...");
+                    Main.updateProgress.accept("Port " + adbPort + " is already in use, trying port " + nextPort + "...");
                     adbPort = nextPort;
                     retry(0);
                 } else if (error.contains("device unauthorized")) {
-                    System.err.println("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
+                    Main.updateError.accept("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
                     retry();
                 } else if (!((adbPort.equals(output.trim()) || output.isBlank()) && exitCode == 0) && !error.isBlank()) {
-                    System.err.println("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
-                    System.exit(1);
+                    Main.updateError.accept("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
                 }
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -159,16 +160,16 @@ public class AdbHandler implements AutoCloseable {
         var os = systemInfo.getOperatingSystem();
         for (OSProcess process : os.getProcesses()) {
             if (getAdbExecutableName().equals(process.getName())) {
-                System.out.println("Found running adb process, terminating the process...");
+                Main.updateProgress.accept("Found running adb process, terminating the process...");
                 ProcessHandle.of(process.getProcessID()).ifPresent(procHandle -> {
                     procHandle.destroy();
                     try {
                         procHandle.onExit().get(30, TimeUnit.SECONDS);
-                        System.out.println("Running adb process was successfully terminated");
+                        Main.updateProgress.accept("Running adb process was successfully terminated");
                     } catch (InterruptedException | ExecutionException e) {
-                        System.err.println("Unexpected error when attempting to terminate adb: " + Throwables.getStackTraceAsString(e));
+                        Main.updateError.accept("Unexpected error when attempting to terminate adb: " + Throwables.getStackTraceAsString(e));
                     } catch (TimeoutException e) {
-                        System.err.println("Failed to terminate adb process within 30 seconds.");
+                        Main.updateError.accept("Failed to terminate adb process within 30 seconds.");
                     }
                 });
                 return;
@@ -190,8 +191,7 @@ public class AdbHandler implements AutoCloseable {
 
     private void deleteAdbExecutable() {
         if (adbExecutable == null || !adbExecutable.delete()) {
-            System.err.println("Failed to delete ADB executable.");
-            System.exit(1);
+            Main.updateError.accept("Failed to delete ADB executable.");
         }
     }
 }
