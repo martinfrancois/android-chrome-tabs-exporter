@@ -7,6 +7,8 @@ import org.json.JSONObject;
 import java.util.Comparator;
 import java.util.TreeSet;
 
+import static org.springframework.web.util.HtmlUtils.htmlUnescape;
+
 public class AndroidChromeTabsProcessor {
 
     private AndroidChromeTabsProcessor() {
@@ -29,7 +31,7 @@ public class AndroidChromeTabsProcessor {
                 if (title.isBlank() && url.isBlank()) {
                     continue;
                 }
-                tabs.add(new Tab(title, removeWww(url)));
+                tabs.add(new Tab(htmlUnescape(title), removeWww(url)));
             }
         }
         return tabs;
