@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("org.openjfx.javafxplugin") version "0.1.0"
 }
 
 group = "com.github.martinfrancois"
@@ -8,6 +9,12 @@ version = "1.0"
 
 repositories {
     mavenCentral()
+    maven { setUrl("https://jitpack.io") }
+}
+
+javafx {
+    version = "21"
+    modules = listOf("javafx.controls")
 }
 
 dependencies {
@@ -18,6 +25,7 @@ dependencies {
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     implementation("com.github.oshi:oshi-core:6.4.12") // OS handling
     implementation("org.springframework:spring-web:6.1.3") // Unescaping HTML
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.8") // Dark mode detection
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.assertj:assertj-core:3.25.3")
@@ -36,7 +44,7 @@ java {
 }
 
 tasks.jar {
-    manifest.attributes["Main-Class"] = "com.github.martinfrancois.Main"
+    manifest.attributes["Main-Class"] = "com.github.martinfrancois.MainUi"
 }
 
 tasks.shadowJar {
