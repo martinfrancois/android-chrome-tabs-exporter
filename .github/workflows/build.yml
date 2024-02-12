@@ -17,6 +17,10 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
+      - name: Run unit tests
+        run: |
+          ./gradlew test
+
       - name: Build with Gradle
         run: |
           ./gradlew shadowJar
