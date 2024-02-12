@@ -21,10 +21,10 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests
-        run: echo "yes" | ./gradlew test --scan
+        run: ./gradlew test --scan
 
       - name: Build with Gradle
-        run: echo "yes" | ./gradlew shadowJar --scan
+        run: ./gradlew shadowJar --scan
 
       - name: Get current date
         if: github.ref == 'refs/heads/master'
