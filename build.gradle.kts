@@ -19,11 +19,11 @@ javafx {
 
 dependencies {
     implementation("com.google.guava:guava:33.0.0-jre")
-    implementation("org.json:json:20231013") // JSON processing
+    implementation("org.json:json:20240205") // JSON processing
     implementation("org.apache.poi:poi:5.2.5") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.2.5") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
-    implementation("com.github.oshi:oshi-core:6.4.11") // OS handling
+    implementation("com.github.oshi:oshi-core:6.4.12") // OS handling
     implementation("org.springframework:spring-web:6.1.3") // Unescaping HTML
     implementation("com.github.Dansoftowner:jSystemThemeDetector:3.8") // Dark mode detection
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
