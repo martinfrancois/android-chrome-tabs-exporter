@@ -28,6 +28,7 @@ dependencies {
     implementation("com.github.Dansoftowner:jSystemThemeDetector:3.8") // Dark mode detection
     testImplementation(platform("org.junit:junit-bom:5.10.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.25.3")
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.22.1")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.12")
