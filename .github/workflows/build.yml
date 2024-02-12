@@ -2,8 +2,6 @@ name: build
 
 on:
   push:
-    branches:
-      - master
 
 jobs:
   build:
@@ -24,6 +22,7 @@ jobs:
           ./gradlew shadowJar
 
       - name: Get current date
+        if: github.ref == 'refs/heads/master'
         id: date
         run: echo "::set-output name=date::$(date --utc +%Y-%m-%dT%H-%M-%SZ)"
 
