@@ -2,5 +2,34 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "reviewers": ["martinfrancois"],
+  "rangeStrategy": "replace",
+  "separateMinorPatch": true,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
+      "groupName": "Apache POI",
+      "matchPackagePrefixes": [
+        "org.apache.poi"
+      ]
+    },
+    {
+      "groupName": "Logging",
+      "matchPackagePrefixes": [
+        "org.apache.logging", 
+        "org.slf4j"
+      ]
+    }, 
+    {
+      "groupName": "Testing",
+      "matchPackagePrefixes": [
+        "org.junit", 
+        "org.assertj"
+      ]
+    }
   ]
 }
