@@ -26,7 +26,7 @@ dependencies {
     implementation("com.github.oshi:oshi-core:6.6.1") // OS handling
     implementation("org.springframework:spring-web:6.1.10") // Unescaping HTML
     implementation("com.github.Dansoftowner:jSystemThemeDetector:3.8") // Dark mode detection
-    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation(platform("org.junit:junit-bom:5.10.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.0")
