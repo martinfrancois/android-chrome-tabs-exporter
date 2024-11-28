@@ -30,7 +30,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
-    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.23.1")
+    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.24.2")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
 }
 
