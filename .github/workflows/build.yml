@@ -20,6 +20,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+            cache-disabled: true
 
       - name: Run unit tests
         run: ./gradlew test --scan --refresh-dependencies
