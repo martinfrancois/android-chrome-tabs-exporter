@@ -25,7 +25,7 @@ dependencies {
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     implementation("com.github.oshi:oshi-core:6.6.3") // OS handling
     implementation("org.springframework:spring-web:6.1.12") // Unescaping HTML
-    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.8") // Dark mode detection
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
     testImplementation(platform("org.junit:junit-bom:5.10.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
