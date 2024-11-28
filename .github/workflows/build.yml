@@ -21,7 +21,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests
-        run: ./gradlew test --scan
+        run: ./gradlew test --scan --refresh-dependencies
 
       - name: Build with Gradle
         run: ./gradlew shadowJar --scan
