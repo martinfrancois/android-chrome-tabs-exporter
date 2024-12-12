@@ -25,7 +25,7 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
-    implementation("org.springframework:spring-web:6.2.0") // Unescaping HTML
+    implementation("org.springframework:spring-web:6.2.1") // Unescaping HTML
     implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
