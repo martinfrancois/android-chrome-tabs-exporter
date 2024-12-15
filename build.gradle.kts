@@ -25,21 +25,11 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     implementation("org.springframework:spring-web:6.2.1") // Unescaping HTML
+    implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
 
-    // OS handling without jna-jpms
-    implementation("com.github.oshi:oshi-core:6.6.5") {
-        exclude(group = "net.java.dev.jna", module = "jna-jpms")
-    }
-
-    // Dark mode detection without jna-jpms
-    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") {
-        exclude(group = "net.java.dev.jna", module = "jna-jpms")
-    }
-
-    // Explicitly include standard JNA
+    // Explicitly include standard JNA and jna-jpms
     implementation("net.java.dev.jna:jna:5.15.0")
-
-    // Explicitly include jna-jpms to satisfy any accidental requests
     implementation("net.java.dev.jna:jna-jpms:5.15.0")
 
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
@@ -75,7 +65,7 @@ if (hasProperty("buildScan")) {
     }
 }
 
-// Resolution Strategy to Force Standard JNA Artifacts
+// Resolution Strategy to Force Standard JNA and jna-platform Artifacts
 configurations.all {
     resolutionStrategy {
         eachDependency {
@@ -89,7 +79,7 @@ configurations.all {
             }
         }
 
-        // Force specific versions to ensure consistency
+        // Force specific versions to ensure consistency across all dependencies
         force("net.java.dev.jna:jna:5.15.0")
         force("net.java.dev.jna:jna-platform:5.15.0")
     }
