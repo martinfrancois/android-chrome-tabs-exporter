@@ -3,32 +3,36 @@
   "extends": [
     "config:recommended"
   ],
-  "reviewers": ["martinfrancois"],
+  "reviewers": [
+    "martinfrancois"
+  ],
   "rangeStrategy": "replace",
   "separateMinorPatch": true,
   "packageRules": [
     {
-      "matchUpdateTypes": ["patch"],
+      "matchUpdateTypes": [
+        "patch"
+      ],
       "automerge": true
     },
     {
       "groupName": "Apache POI",
-      "matchPackagePrefixes": [
-        "org.apache.poi"
+      "matchPackageNames": [
+        "org.apache.poi{/,}**"
       ]
     },
     {
       "groupName": "Logging",
-      "matchPackagePrefixes": [
-        "org.apache.logging", 
-        "org.slf4j"
+      "matchPackageNames": [
+        "org.apache.logging{/,}**",
+        "org.slf4j{/,}**"
       ]
-    }, 
+    },
     {
       "groupName": "Testing",
-      "matchPackagePrefixes": [
-        "org.junit", 
-        "org.assertj"
+      "matchPackageNames": [
+        "org.junit{/,}**",
+        "org.assertj{/,}**"
       ]
     }
   ]
