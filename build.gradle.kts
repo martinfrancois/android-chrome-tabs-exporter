@@ -28,7 +28,7 @@ dependencies {
     implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
     implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
 
-    // Explicitly include standard JNA and jna-jpms
+    // Include standard JNA and the JPMS variant explicitly
     implementation("net.java.dev.jna:jna:5.15.0")
     implementation("net.java.dev.jna:jna-jpms:5.15.0")
 
@@ -36,6 +36,7 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
+
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.24.2")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
 }
@@ -65,21 +66,17 @@ if (hasProperty("buildScan")) {
     }
 }
 
-// Resolution Strategy to Force Standard JNA and jna-platform Artifacts
+// Apply resolution strategy here to handle jpms variant issues
 configurations.all {
     resolutionStrategy {
-        eachDependency {
-            when {
-                requested.group == "net.java.dev.jna" && requested.name == "jna" -> {
-                    useVersion("5.15.0")
-                }
-                requested.group == "net.java.dev.jna" && requested.name == "jna-platform" -> {
-                    useVersion("5.15.0")
-                }
-            }
+        dependencySubstitution {
+            // Substitute any attempt to load the JPMS classifier of jna at this version 
+            // with the correct jna-jpms artifact.
+            substitute(module("net.java.dev.jna:jna:5.15.0:jpms"))
+                .using(module("net.java.dev.jna:jna-jpms:5.15.0"))
         }
 
-        // Force specific versions to ensure consistency across all dependencies
+        // Force consistent JNA versions to prevent conflicts.
         force("net.java.dev.jna:jna:5.15.0")
         force("net.java.dev.jna:jna-platform:5.15.0")
     }
