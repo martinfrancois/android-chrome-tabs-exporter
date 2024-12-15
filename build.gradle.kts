@@ -10,7 +10,7 @@ version = "1.0"
 
 repositories {
     mavenCentral()
-    maven { setUrl("https://jitpack.io") }
+    maven("https://jitpack.io")
 }
 
 javafx {
@@ -24,13 +24,31 @@ dependencies {
     implementation("org.apache.poi:poi:5.3.0") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
-    implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
     implementation("org.springframework:spring-web:6.2.1") // Unescaping HTML
-    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
+
+    // OS handling
+    implementation("com.github.oshi:oshi-core:6.6.5") {
+        // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
+        exclude(group = "net.java.dev.jna", module = "jna")
+        exclude(group = "net.java.dev.jna", module = "jna-platform")
+    }
+
+    // Dark mode detection
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") {
+        // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
+        exclude(group = "net.java.dev.jna", module = "jna")
+        exclude(group = "net.java.dev.jna", module = "jna-platform")
+    }
+
+    // Explicitly add jna-jpms as a replacement for jna
+    // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
+    implementation("net.java.dev.jna:jna-jpms:5.15.0")
+
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.26.3")
+
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.24.2")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.16")
 }
