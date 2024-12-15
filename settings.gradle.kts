@@ -1,21 +1,11 @@
 rootProject.name = "android-chrome-tabs-exporter"
 
-pluginManagement {
-    repositories {
-        gradlePluginPortal()
-        mavenCentral()
-        maven("https://jitpack.io")
-    }
-}
-
 dependencyResolutionManagement {
     repositories {
         mavenCentral {
-            // Use only Maven POM and artifact metadata, exclude Gradle Module Metadata
             metadataSources {
                 mavenPom()
                 artifact()
-                // Exclude gradleMetadata() to prevent incorrect variant selection
             }
         }
         maven("https://jitpack.io") {
@@ -26,16 +16,10 @@ dependencyResolutionManagement {
         }
     }
 
-    components {
-        withModule("net.java.dev.jna:jna") {
-            allVariants {
-                withCapabilities {
-                    // Remove any capabilities that mention JPMS to prevent Gradle from seeking jpms classifiers
-                    removeAll { capability ->
-                        capability.name.contains("jpms", ignoreCase = true)
-                    }
-                }
-            }
+    resolutionStrategy {
+        dependencySubstitution {
+            // Substitute any attempt to resolve jna:5.15.0:jpms with jna-jpms:5.15.0
+            substitute(module("net.java.dev.jna:jna:5.15.0:jpms")) with module("net.java.dev.jna:jna-jpms:5.15.0")
         }
     }
 }
