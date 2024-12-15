@@ -25,11 +25,20 @@ dependencies {
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
     implementation("org.springframework:spring-web:6.2.1") // Unescaping HTML
-    implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
-    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
 
-    // Include standard JNA and the JPMS variant explicitly
-    implementation("net.java.dev.jna:jna:5.15.0")
+    // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
+    implementation("com.github.oshi:oshi-core:6.6.5") {
+        exclude(group = "net.java.dev.jna", module = "jna")
+        exclude(group = "net.java.dev.jna", module = "jna-platform")
+    }
+
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") {
+        exclude(group = "net.java.dev.jna", module = "jna")
+        exclude(group = "net.java.dev.jna", module = "jna-platform")
+    }
+
+    // Explicitly add jna-jpms as a replacement for jna
+    // This ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
     implementation("net.java.dev.jna:jna-jpms:5.15.0")
 
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
@@ -63,21 +72,5 @@ if (hasProperty("buildScan")) {
     extensions.findByName("buildScan")?.withGroovyBuilder {
         setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
         setProperty("termsOfServiceAgree", "yes")
-    }
-}
-
-// Apply resolution strategy here to handle jpms variant issues
-configurations.all {
-    resolutionStrategy {
-        dependencySubstitution {
-            // Substitute any attempt to load the JPMS classifier of jna at this version 
-            // with the correct jna-jpms artifact.
-            substitute(module("net.java.dev.jna:jna:5.15.0:jpms"))
-                .using(module("net.java.dev.jna:jna-jpms:5.15.0"))
-        }
-
-        // Force consistent JNA versions to prevent conflicts.
-        force("net.java.dev.jna:jna:5.15.0")
-        force("net.java.dev.jna:jna-platform:5.15.0")
     }
 }
