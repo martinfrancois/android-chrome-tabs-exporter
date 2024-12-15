@@ -10,7 +10,7 @@ version = "1.0"
 
 repositories {
     mavenCentral()
-    maven { setUrl("https://jitpack.io") }
+    maven("https://jitpack.io")
 }
 
 javafx {
@@ -24,9 +24,24 @@ dependencies {
     implementation("org.apache.poi:poi:5.3.0") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.5") // Zip file processing
-    implementation("com.github.oshi:oshi-core:6.6.5") // OS handling
     implementation("org.springframework:spring-web:6.2.1") // Unescaping HTML
-    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") // Dark mode detection
+
+    // OS handling without jna-jpms
+    implementation("com.github.oshi:oshi-core:6.6.5") {
+        exclude(group = "net.java.dev.jna", module = "jna-jpms")
+    }
+
+    // Dark mode detection without jna-jpms
+    implementation("com.github.Dansoftowner:jSystemThemeDetector:3.9.1") {
+        exclude(group = "net.java.dev.jna", module = "jna-jpms")
+    }
+
+    // Explicitly include standard JNA
+    implementation("net.java.dev.jna:jna:5.15.0")
+
+    // Explicitly include jna-jpms to satisfy any accidental requests
+    implementation("net.java.dev.jna:jna-jpms:5.15.0")
+
     testImplementation(platform("org.junit:junit-bom:5.11.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -57,5 +72,25 @@ if (hasProperty("buildScan")) {
     extensions.findByName("buildScan")?.withGroovyBuilder {
         setProperty("termsOfServiceUrl", "https://gradle.com/terms-of-service")
         setProperty("termsOfServiceAgree", "yes")
+    }
+}
+
+// Resolution Strategy to Force Standard JNA Artifacts
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            when {
+                requested.group == "net.java.dev.jna" && requested.name == "jna" -> {
+                    useVersion("5.15.0")
+                }
+                requested.group == "net.java.dev.jna" && requested.name == "jna-platform" -> {
+                    useVersion("5.15.0")
+                }
+            }
+        }
+
+        // Force specific versions to ensure consistency
+        force("net.java.dev.jna:jna:5.15.0")
+        force("net.java.dev.jna:jna-platform:5.15.0")
     }
 }
