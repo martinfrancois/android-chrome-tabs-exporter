@@ -19,7 +19,7 @@ javafx {
 }
 
 dependencies {
-    implementation("com.google.guava:guava:33.3.1-jre")
+    implementation("com.google.guava:guava:33.4.0-jre")
     implementation("org.json:json:20240303") // JSON processing
     implementation("org.apache.poi:poi:5.3.0") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:5.3.0") // Apache POI for Excel OOXML format
