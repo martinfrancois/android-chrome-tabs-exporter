@@ -42,7 +42,7 @@ dependencies {
 
     // Explicitly add jna-jpms as a replacement for jna
     // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
-    implementation("net.java.dev.jna:jna-jpms:5.16.0")
+    implementation("net.java.dev.jna:jna-jpms:5.19.1")
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
