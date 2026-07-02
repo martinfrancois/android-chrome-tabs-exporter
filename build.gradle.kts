@@ -49,7 +49,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.6")
 
-    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.24.3")
+    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.26.1")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.17")
 }
 
