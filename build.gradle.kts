@@ -50,7 +50,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.27.7")
 
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.26.1")
-    runtimeOnly("org.slf4j:slf4j-simple:2.0.17")
+    runtimeOnly("org.slf4j:slf4j-simple:2.0.18")
 }
 
 tasks.test {
