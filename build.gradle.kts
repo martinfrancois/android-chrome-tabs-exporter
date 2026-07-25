@@ -21,8 +21,8 @@ javafx {
 dependencies {
     implementation("com.google.guava:guava:33.4.8-jre")
     implementation("org.json:json:20250517") // JSON processing
-    implementation("org.apache.poi:poi:5.4.1") // Apache POI for Excel
-    implementation("org.apache.poi:poi-ooxml:5.4.1") // Apache POI for Excel OOXML format
+    implementation("org.apache.poi:poi:5.5.1") // Apache POI for Excel
+    implementation("org.apache.poi:poi-ooxml:5.5.1") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.6") // Zip file processing
     implementation("org.springframework:spring-web:6.2.14") // Unescaping HTML
 
