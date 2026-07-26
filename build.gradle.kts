@@ -27,7 +27,7 @@ dependencies {
     implementation("org.springframework:spring-web:7.0.8") // Unescaping HTML
 
     // OS handling
-    implementation("com.github.oshi:oshi-core:6.12.0") {
+    implementation("com.github.oshi:oshi-core:7.4.2") {
         // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
         exclude(group = "net.java.dev.jna", module = "jna")
         exclude(group = "net.java.dev.jna", module = "jna-platform")
@@ -44,7 +44,7 @@ dependencies {
     // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
     implementation("net.java.dev.jna:jna-jpms:5.19.1")
 
-    testImplementation(platform("org.junit:junit-bom:5.14.4"))
+    testImplementation(platform("org.junit:junit-bom:6.1.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.7")
