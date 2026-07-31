@@ -27,7 +27,7 @@ dependencies {
     implementation("org.springframework:spring-web:7.0.8") // Unescaping HTML
 
     // OS handling
-    implementation("com.github.oshi:oshi-core:7.4.2") {
+    implementation("com.github.oshi:oshi-core:7.4.3") {
         // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
         exclude(group = "net.java.dev.jna", module = "jna")
         exclude(group = "net.java.dev.jna", module = "jna-platform")
