@@ -5,8 +5,12 @@
     "helpers:pinGitHubActionDigests",
     ":rebaseStalePrs"
   ],
-  "reviewers": ["martinfrancois"],
-  "labels": ["dependencies"],
+  "reviewers": [
+    "martinfrancois"
+  ],
+  "labels": [
+    "dependencies"
+  ],
   "rangeStrategy": "replace",
   "pinDigests": true,
   "prConcurrentLimit": 0,
@@ -19,15 +23,23 @@
   },
   "dependencyDashboardApproval": false,
   "separateMajorMinor": true,
-  "separateMultipleMajor": true,
+  "separateMultipleMajor": false,
   "vulnerabilityAlerts": {
     "enabled": true,
-    "labels": ["security"]
+    "labels": [
+      "security"
+    ]
   },
   "packageRules": [
     {
       "description": "Bundle every non-major update into one automergeable pull request. Major updates are deliberately excluded so that a pending major never holds back the bundle.",
-      "matchUpdateTypes": ["minor", "patch", "pin", "pinDigest", "digest"],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest"
+      ],
       "groupName": "all non-major dependencies",
       "groupSlug": "all-non-major",
       "automerge": true
@@ -42,31 +54,45 @@
       "groupName": "Native platform stack",
       "groupSlug": "native-platform",
       "automerge": false,
-      "addLabels": ["needs launch check"]
+      "addLabels": [
+        "needs launch check"
+      ]
     },
     {
       "description": "Apache POI artifacts share a release train and must move together.",
-      "matchPackageNames": ["org.apache.poi{/,}**"],
+      "matchPackageNames": [
+        "org.apache.poi{/,}**"
+      ],
       "groupName": "Apache POI",
       "groupSlug": "apache-poi"
     },
     {
       "description": "Logging facade and backend must move together; a mismatched pair fails at runtime rather than at compile time.",
-      "matchPackageNames": ["org.apache.logging{/,}**", "org.slf4j{/,}**"],
+      "matchPackageNames": [
+        "org.apache.logging{/,}**",
+        "org.slf4j{/,}**"
+      ],
       "groupName": "Logging",
       "groupSlug": "logging"
     },
     {
       "description": "Test framework artifacts share a release train.",
-      "matchPackageNames": ["org.junit{/,}**", "org.assertj{/,}**"],
+      "matchPackageNames": [
+        "org.junit{/,}**",
+        "org.assertj{/,}**"
+      ],
       "groupName": "Testing",
       "groupSlug": "testing"
     },
     {
       "description": "Major updates land one at a time and require a human merge after review of the migration notes. No groupName is set: majors are already ungrouped because the bundle rule matches non-major types only, and forcing one would split the lockstep groups above.",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "automerge": false,
-      "addLabels": ["major update"]
+      "addLabels": [
+        "major update"
+      ]
     }
   ]
 }
