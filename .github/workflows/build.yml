@@ -22,8 +22,19 @@ jobs:
         with:
           cache-provider: basic
 
-      - name: Run unit tests
-        run: ./gradlew test --scan
+      # `check` runs the unit tests and then jacocoTestCoverageVerification, which fails the
+      # job when line coverage drops below 80%. The tests download the real platform-tools
+      # archive from dl.google.com and run the real adb binary, so this job needs network access.
+      - name: Run unit tests and enforce coverage gate
+        run: ./gradlew check --scan
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-coverage-report
+          path: build/reports/jacoco/test/
+          if-no-files-found: warn
 
       - name: Build with Gradle
         run: ./gradlew shadowJar --scan
