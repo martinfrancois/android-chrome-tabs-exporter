@@ -45,7 +45,7 @@ dependencies {
     // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
     implementation("net.java.dev.jna:jna-jpms:5.19.1")
 
-    testImplementation(platform("org.junit:junit-bom:6.1.2"))
+    testImplementation(platform("org.junit:junit-bom:6.1.3"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.7")
