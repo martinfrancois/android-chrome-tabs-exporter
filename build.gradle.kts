@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("jacoco")
     id("com.gradleup.shadow") version "9.6.1"
     id("org.openjfx.javafxplugin") version "0.1.0"
     id("com.github.ben-manes.versions") version "0.59.0"
@@ -48,6 +49,10 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.assertj:assertj-core:3.27.7")
+    // Monocle is the headless JavaFX glass backend. It lets the UI tests drive the real
+    // JavaFX toolkit (real properties, real bindings, real Scene/Stage) on machines and CI
+    // runners that have no X11/GTK display available.
+    testImplementation("org.testfx:openjfx-monocle:21.0.2")
 
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.26.1")
     runtimeOnly("org.slf4j:slf4j-simple:2.0.18")
@@ -55,6 +60,30 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    // Run the JavaFX toolkit headlessly through Monocle so the UI tests work with no display.
+    systemProperty("java.awt.headless", "true")
+    systemProperty("glass.platform", "Monocle")
+    systemProperty("monocle.platform", "Headless")
+    systemProperty("prism.order", "sw")
+    systemProperty("prism.verbose", "false")
+    systemProperty("testfx.headless", "true")
+
+    testLogging {
+        events("failed")
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.SHORT
+    }
+
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(true)
+    }
 }
 
 java {
