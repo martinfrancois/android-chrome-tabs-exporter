@@ -27,8 +27,28 @@ dependencies {
     implementation("net.lingala.zip4j:zip4j:2.11.6") // Zip file processing
     implementation("org.springframework:spring-web:7.0.8") // Unescaping HTML
 
-    // OS handling
-    implementation("com.github.oshi:oshi-core:7.4.4") {
+    // OS handling.
+    //
+    // Pinned to the 6.x line on purpose. jSystemThemeDetector (below) links against
+    // `oshi.SystemInfo.getCurrentPlatform()` from the static initialiser of
+    // `com.jthemedetecor.util.OsInfo`, and that method returns `oshi.PlatformEnum`. oshi-core
+    // 7.0.0 deleted both: the method is gone from `SystemInfo` and `PlatformEnum` moved to
+    // `oshi.util.PlatformEnum` in the separate oshi-common artifact. Nothing in the application
+    // calls the removed method itself, so the whole build still compiles against oshi-core 7.x;
+    // the breakage only shows up as a `NoSuchMethodError` the first time the theme detector is
+    // touched, which is every first launch on a machine with no stored theme preference.
+    //
+    // 6.12.0 is the newest oshi-core release that still ships `oshi/PlatformEnum.class` and
+    // still declares `public static oshi.PlatformEnum getCurrentPlatform()`, so it is the
+    // highest version that satisfies the detector. Raising this line requires a
+    // jSystemThemeDetector release built against oshi 7.x; none exists yet (3.9.1 is the latest
+    // release and still declares oshi-core 5.8.6). Adding oshi-common does not help: it carries
+    // `oshi.util.PlatformEnum`, which is a different class from the `oshi.PlatformEnum` the
+    // detector's call site names, and it ships no `oshi.SystemInfo` at all.
+    //
+    // OsThemeDetectorLaunchTest exercises the real detector so this pairing cannot regress
+    // silently again.
+    implementation("com.github.oshi:oshi-core:6.12.0") {
         // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
         exclude(group = "net.java.dev.jna", module = "jna")
         exclude(group = "net.java.dev.jna", module = "jna-platform")
@@ -41,9 +61,13 @@ dependencies {
         exclude(group = "net.java.dev.jna", module = "jna-platform")
     }
 
-    // Explicitly add jna-jpms as a replacement for jna
-    // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms
+    // Explicitly add jna-jpms and jna-platform-jpms as replacements for jna and jna-platform.
+    // Ensures JPMS support and avoids Gradle looking for jna:5.15.0:jpms. oshi-core 6.x asks for
+    // the plain jna/jna-platform pair that the exclusions above strip, and it needs
+    // `com.sun.jna.platform.*` at runtime, so jna-platform-jpms has to be declared here rather
+    // than arrive transitively the way it did from oshi-core 7.x.
     implementation("net.java.dev.jna:jna-jpms:5.19.1")
+    implementation("net.java.dev.jna:jna-platform-jpms:5.19.1")
 
     testImplementation(platform("org.junit:junit-bom:6.1.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
