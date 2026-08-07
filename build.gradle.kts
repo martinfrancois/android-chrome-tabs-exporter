@@ -48,7 +48,7 @@ dependencies {
     //
     // OsThemeDetectorLaunchTest exercises the real detector so this pairing cannot regress
     // silently again.
-    implementation("com.github.oshi:oshi-core:6.12.0") {
+    implementation("com.github.oshi:oshi-core:7.4.3") {
         // Exclude JNA and jna-platform from transitive dependencies that might introduce conflicts
         exclude(group = "net.java.dev.jna", module = "jna")
         exclude(group = "net.java.dev.jna", module = "jna-platform")
