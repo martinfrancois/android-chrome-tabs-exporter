@@ -86,6 +86,29 @@ tasks.jacocoTestReport {
     }
 }
 
+// Coverage gate. `./gradlew check` (and therefore `build`) fails when line coverage of the
+// production sources drops below 80%. There are deliberately no class or package exclusions:
+// every class under src/main counts, including the JavaFX UI.
+val minimumLineCoverage = "0.80".toBigDecimal()
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.test)
+    violationRules {
+        rule {
+            element = "BUNDLE"
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                minimum = minimumLineCoverage
+            }
+        }
+    }
+}
+
+tasks.check {
+    dependsOn(tasks.jacocoTestCoverageVerification)
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(21))
