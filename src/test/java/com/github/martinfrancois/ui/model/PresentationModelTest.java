@@ -22,8 +22,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * JavaFX itself, and theme preferences really round-trip through the user preferences node
  * that the shipping application uses.
  *
- * <p>Every test seeds a stored theme preference first, because the no-preference path is
- * currently broken by a dependency conflict; see {@link OsThemeDetectorDependencyTest}.
+ * <p>Every test seeds a stored theme preference first so that the assertions here stay
+ * independent of whatever theme the host operating system happens to report. The
+ * no-preference path, which consults the operating system through jSystemThemeDetector, is
+ * covered by {@link OsThemeDetectorLaunchTest}.
  */
 class PresentationModelTest {
 

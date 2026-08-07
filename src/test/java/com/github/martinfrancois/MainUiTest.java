@@ -72,8 +72,8 @@ class MainUiTest {
 
     @BeforeEach
     void showUi() {
-        // A stored preference is required: the operating-system theme detector cannot be
-        // reached at all right now, see OsThemeDetectorDependencyTest.
+        // A stored preference keeps these assertions independent of the host operating system's
+        // theme. The no-preference path is covered by OsThemeDetectorLaunchTest.
         Preferences.userNodeForPackage(MainUi.class).put(THEME_PREFERENCE_KEY, Theme.LIGHT.name());
         System.setProperty("user.home", System.getProperty("java.io.tmpdir"));
 
