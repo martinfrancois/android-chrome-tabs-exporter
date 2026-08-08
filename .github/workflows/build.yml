@@ -40,12 +40,12 @@ jobs:
         run: ./gradlew shadowJar --scan
 
       - name: Get current date
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         id: date
         run: echo "date=$(date --utc +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
 
       - name: Create GitHub Release and Upload Artifact
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3
         with:
           tag_name: ${{ steps.date.outputs.date }}
