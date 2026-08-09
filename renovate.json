@@ -63,6 +63,13 @@
       ]
     },
     {
+      "description": "Cap oshi-core below 7 until jSystemThemeDetector ships a release built against it. oshi 7.0.0 deleted SystemInfo.getCurrentPlatform() and moved PlatformEnum to oshi.util, both of which the detector names from OsInfo's static initialiser, so 7.x compiles cleanly and then throws NoSuchMethodError on first launch. OsThemeDetectorLaunchTest reproduces this: it fails four tests against oshi 7.4.3 with NoSuchMethodError at com.jthemedetecor.util.OsInfo.<clinit>. Without this cap Renovate re-proposes the same unmergeable major every week. Remove it once a jSystemThemeDetector release declares oshi-core 7.x; 3.9.1 is the latest and still declares 5.8.6.",
+      "matchPackageNames": [
+        "com.github.oshi{/,}**"
+      ],
+      "allowedVersions": "<7"
+    },
+    {
       "description": "Apache POI artifacts share a release train and must move together.",
       "matchPackageNames": [
         "org.apache.poi{/,}**"
