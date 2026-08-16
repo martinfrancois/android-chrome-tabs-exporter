@@ -3,7 +3,7 @@ plugins {
     id("jacoco")
     id("com.gradleup.shadow") version "9.6.1"
     id("org.openjfx.javafxplugin") version "0.1.0"
-    id("com.github.ben-manes.versions") version "0.59.0"
+    id("com.github.ben-manes.versions") version "0.61.0"
 }
 
 group = "com.github.martinfrancois"
