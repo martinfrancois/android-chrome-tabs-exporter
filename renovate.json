@@ -32,7 +32,12 @@
     "enabled": true,
     "labels": [
       "security"
-    ]
+    ],
+    "schedule": [],
+    "updateNotScheduled": true,
+    "minimumReleaseAge": null,
+    "groupName": null,
+    "groupSlug": null
   },
   "packageRules": [
     {
@@ -96,7 +101,7 @@
       "groupSlug": "testing"
     },
     {
-      "description": "Major updates land one at a time and require a human merge after review of the migration notes. No groupName is set: majors are already ungrouped because the bundle rule matches non-major types only, and forcing one would split the lockstep groups above.",
+      "description": "Major updates require human review. The final private-repository grouping rules collect reviewed updates without changing this merge requirement.",
       "matchUpdateTypes": [
         "major"
       ],
@@ -104,6 +109,40 @@
       "addLabels": [
         "major update"
       ]
+    },
+    {
+      "description": "Private repository: combine eligible automatic updates after package-specific rules to conserve Actions minutes. Keep existing review requirements unchanged.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest"
+      ],
+      "matchJsonata": [
+        "automerge = true"
+      ],
+      "groupName": "Routine dependency updates",
+      "groupSlug": "routine-dependencies"
+    },
+    {
+      "description": "Private repository: bundle review-required updates without enabling automerge. Keep majors separate from reviewed non-major updates so incompatible major upgrades do not block other reviewed fixes.",
+      "matchUpdateTypes": [
+        "major",
+        "minor",
+        "patch",
+        "pin",
+        "pinDigest",
+        "digest"
+      ],
+      "matchJsonata": [
+        "$not(automerge = true)"
+      ],
+      "groupName": "Reviewed dependency updates",
+      "groupSlug": "reviewed-dependencies",
+      "automerge": false
     }
-  ]
+  ],
+  "updateNotScheduled": false,
+  "separateMinorPatch": false
 }
