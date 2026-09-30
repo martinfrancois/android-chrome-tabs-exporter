@@ -20,13 +20,15 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9c971963bec38e04b3d30dcc455b5382be2fdbfb # v6.3.0
         with:
-          cache-provider: basic
+          build-scan-publish: true
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
 
       # `check` runs the unit tests and then jacocoTestCoverageVerification, which fails the
       # job when line coverage drops below 80%. The tests download the real platform-tools
       # archive from dl.google.com and run the real adb binary, so this job needs network access.
       - name: Run unit tests and enforce coverage gate
-        run: ./gradlew check --scan
+        run: ./gradlew check
 
       - name: Upload coverage report
         if: always()
@@ -37,7 +39,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Build with Gradle
-        run: ./gradlew shadowJar --scan
+        run: ./gradlew shadowJar
 
       - name: Get current date
         if: github.ref == 'refs/heads/main'
