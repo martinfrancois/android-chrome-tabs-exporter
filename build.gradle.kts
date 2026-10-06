@@ -78,7 +78,7 @@ dependencies {
     testImplementation("org.testfx:openjfx-monocle:21.0.2")
 
     runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.26.1")
-    runtimeOnly("org.slf4j:slf4j-simple:2.0.19")
+    runtimeOnly("org.slf4j:slf4j-simple:2.0.20")
 }
 
 tasks.test {
@@ -144,4 +144,9 @@ tasks.jar {
 
 tasks.shadowJar {
     archiveFileName.set("android-chrome-tabs-exporter.jar")
+    // Shadow merges Kotlin module metadata with a transformer, and the default EXCLUDE strategy
+    // would drop a second file of the same name before the transformer sees it.
+    filesMatching("META-INF/*.kotlin_module") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
