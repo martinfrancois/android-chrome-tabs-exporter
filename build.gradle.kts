@@ -144,4 +144,9 @@ tasks.jar {
 
 tasks.shadowJar {
     archiveFileName.set("android-chrome-tabs-exporter.jar")
+    // Shadow merges Kotlin module metadata with a transformer, and the default EXCLUDE strategy
+    // would drop a second file of the same name before the transformer sees it.
+    filesMatching("META-INF/*.kotlin_module") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
