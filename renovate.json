@@ -26,7 +26,7 @@
   "separateMajorMinor": true,
   "separateMultipleMajor": false,
   "schedule": [
-    "* 0-4 * * 5"
+    "* * * * 5"
   ],
   "vulnerabilityAlerts": {
     "enabled": true,
