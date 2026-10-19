@@ -5,9 +5,6 @@
     "helpers:pinGitHubActionDigests"
   ],
   "rebaseWhen": "conflicted",
-  "reviewers": [
-    "martinfrancois"
-  ],
   "labels": [
     "dependencies"
   ],
