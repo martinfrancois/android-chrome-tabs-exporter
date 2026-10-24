@@ -1,0 +1,55 @@
+[ {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/1",
+   "faviconUrl": "https://www.example.com/favicon.ico",
+   "id": "1",
+   "title": "Example Domain",
+   "type": "page",
+   "url": "https://www.example.com/",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/1"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/2",
+   "faviconUrl": "https://docs.example.org/favicon.ico",
+   "id": "2",
+   "title": "Docs &amp; Guides &middot; Getting started",
+   "type": "page",
+   "url": "https://docs.example.org/getting-started?lang=en&section=2",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/2"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/3",
+   "faviconUrl": "https://www.example.com/favicon.ico",
+   "id": "3",
+   "title": "Example Domain (opened a second time)",
+   "type": "page",
+   "url": "https://www.example.com/",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/3"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/4",
+   "faviconUrl": "",
+   "id": "4",
+   "title": "Recipe: Caf&eacute; au lait",
+   "type": "page",
+   "url": "http://recipes.example.net/cafe-au-lait",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/4"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/5",
+   "faviconUrl": "",
+   "id": "5",
+   "title": "",
+   "type": "page",
+   "url": "",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/5"
+}, {
+   "description": "",
+   "devtoolsFrontendUrl": "/devtools/inspector.html?ws=127.0.0.1:50000/devtools/page/6",
+   "faviconUrl": "",
+   "id": "6",
+   "title": "Tickets 2026 &lt;early bird&gt;",
+   "type": "page",
+   "url": "https://shop.example.com/tickets/2026",
+   "webSocketDebuggerUrl": "ws://127.0.0.1:50000/devtools/page/6"
+} ]
