@@ -2,43 +2,43 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    "helpers:pinGitHubActionDigests"
+    "helpers:pinGitHubActionDigests",
+    ":rebaseStalePrs"
   ],
-  "rebaseWhen": "conflicted",
   "labels": [
     "dependencies"
   ],
-  "platformAutomerge": false,
-  "rangeStrategy": "pin",
-  "pinDigests": true,
-  "prConcurrentLimit": 0,
-  "branchConcurrentLimit": 0,
+  "automergeType": "pr",
+  "ignoreTests": false,
+  "internalChecksFilter": "strict",
   "minimumReleaseAge": "7 days",
   "minimumReleaseAgeBehaviour": "timestamp-required",
-  "internalChecksFilter": "strict",
   "statusCheckWhen": {
     "minimumReleaseAge": "never"
   },
+  "pinDigests": true,
+  "platformAutomerge": false,
+  "rangeStrategy": "pin",
   "dependencyDashboardApproval": false,
+  "prConcurrentLimit": 0,
+  "branchConcurrentLimit": 0,
   "separateMajorMinor": true,
-  "separateMultipleMajor": false,
-  "schedule": [
-    "* * * * 5"
-  ],
+  "separateMultipleMajor": true,
+  "separateMinorPatch": false,
   "vulnerabilityAlerts": {
     "enabled": true,
     "labels": [
       "security"
     ],
+    "minimumReleaseAge": null,
     "schedule": [],
     "updateNotScheduled": true,
-    "minimumReleaseAge": null,
     "groupName": null,
     "groupSlug": null
   },
   "packageRules": [
     {
-      "description": "Bundle every non-major update into one automergeable pull request. Major updates are deliberately excluded so that a pending major never holds back the bundle.",
+      "description": "Merge eligible non-major updates after checks pass; keep unrelated dependencies separate.",
       "matchUpdateTypes": [
         "minor",
         "patch",
@@ -46,12 +46,19 @@
         "pinDigest",
         "digest"
       ],
-      "groupName": "all non-major dependencies",
-      "groupSlug": "all-non-major",
       "automerge": true
     },
     {
-      "description": "Native platform stack that must move in lockstep. jSystemThemeDetector links against oshi at class-initialisation time, and oshi-core 7.x removed SystemInfo.getCurrentPlatform() and relocated PlatformEnum, which the detector still calls from its static initialiser. Moving either side alone produces a NoSuchMethodError at first launch that no compile step catches. jna-jpms belongs to the same cluster because both artifacts exclude the stock jna in favour of it. Automatic merging is off: this pair needs a launch check, not just a green build.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "addLabels": [
+        "major update"
+      ]
+    },
+    {
+      "description": "jSystemThemeDetector links against oshi-core at class initialisation time and both exclude the stock jna in favour of jna-jpms, so the three move together and get a launch check instead of automerge.",
       "matchPackageNames": [
         "com.github.oshi{/,}**",
         "com.github.Dansoftowner{/,}**",
@@ -65,14 +72,14 @@
       ]
     },
     {
-      "description": "Cap oshi-core below 7 until jSystemThemeDetector ships a release built against it. oshi 7.0.0 deleted SystemInfo.getCurrentPlatform() and moved PlatformEnum to oshi.util, both of which the detector names from OsInfo's static initialiser, so 7.x compiles cleanly and then throws NoSuchMethodError on first launch. OsThemeDetectorLaunchTest reproduces this: it fails four tests against oshi 7.4.3 with NoSuchMethodError at com.jthemedetecor.util.OsInfo.<clinit>. Without this cap Renovate re-proposes the same unmergeable major every week. Remove it once a jSystemThemeDetector release declares oshi-core 7.x; 3.9.1 is the latest and still declares 5.8.6.",
+      "description": "oshi-core 7 removed SystemInfo.getCurrentPlatform(), which jSystemThemeDetector 3.9.1 still calls. OsThemeDetectorLaunchTest fails against 7.x. Remove the cap once a jSystemThemeDetector release declares oshi-core 7.",
       "matchPackageNames": [
         "com.github.oshi{/,}**"
       ],
       "allowedVersions": "<7"
     },
     {
-      "description": "Apache POI artifacts share a release train and must move together.",
+      "description": "poi and poi-ooxml share a release train and must move together.",
       "matchPackageNames": [
         "org.apache.poi{/,}**"
       ],
@@ -87,59 +94,6 @@
       ],
       "groupName": "Logging",
       "groupSlug": "logging"
-    },
-    {
-      "description": "Test framework artifacts share a release train.",
-      "matchPackageNames": [
-        "org.junit{/,}**",
-        "org.assertj{/,}**"
-      ],
-      "groupName": "Testing",
-      "groupSlug": "testing"
-    },
-    {
-      "description": "Major updates require human review. The final private-repository grouping rules collect reviewed updates without changing this merge requirement.",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false,
-      "addLabels": [
-        "major update"
-      ]
-    },
-    {
-      "description": "Private repository: combine eligible automatic updates after package-specific rules to conserve Actions minutes. Keep existing review requirements unchanged.",
-      "matchUpdateTypes": [
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest",
-        "digest"
-      ],
-      "matchJsonata": [
-        "automerge = true"
-      ],
-      "groupName": "Routine dependency updates",
-      "groupSlug": "routine-dependencies"
-    },
-    {
-      "description": "Private repository: bundle review-required updates without enabling automerge. Keep majors separate from reviewed non-major updates so incompatible major upgrades do not block other reviewed fixes.",
-      "matchUpdateTypes": [
-        "major",
-        "minor",
-        "patch",
-        "pin",
-        "pinDigest",
-        "digest"
-      ],
-      "matchJsonata": [
-        "$not(automerge = true)"
-      ],
-      "groupName": "Reviewed dependency updates",
-      "groupSlug": "reviewed-dependencies",
-      "automerge": false
     }
-  ],
-  "updateNotScheduled": false,
-  "separateMinorPatch": false
+  ]
 }
