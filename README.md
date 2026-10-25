@@ -26,8 +26,6 @@ A small JavaFX desktop app with one button. When you click "Export Android Tabs"
 ## Requirements
 
 - Java 21 or newer.
-- The JavaFX SDK 21 for your operating system, from https://gluonhq.com/products/javafx/.
-  The released JAR needs it on the module path, see Usage.
 - Network access on every run, for the `platform-tools` download.
 - An Android phone with Chrome, a USB cable, and USB debugging enabled on the phone.
 
@@ -58,14 +56,8 @@ The JAR lands in `build/libs/android-chrome-tabs-exporter.jar`.
 ## Usage
 
 ```bash
-java --module-path <path to javafx-sdk-21>/lib --add-modules javafx.controls -jar android-chrome-tabs-exporter.jar
+java -jar android-chrome-tabs-exporter.jar
 ```
-
-Replace `<path to javafx-sdk-21>` with the unpacked JavaFX SDK. Plain `java -jar` stops
-with "Error: JavaFX runtime components are missing, and are required to run this
-application", because the main class extends `javafx.application.Application` and the
-JavaFX classes inside the JAR sit on the class path, where the Java launcher refuses to
-start them.
 
 In the window that opens, click "Choose Directory", pick where the Excel file should go,
 then click "Export Android Tabs". The text area below the button shows progress and
@@ -126,9 +118,8 @@ changing the socket name in `AdbHandler`.
 - URLs are compared case-sensitively, so `https://Example.com` and `https://example.com`
   produce two rows.
 - Only title and URL are exported. Nothing else from the DevTools listing is kept.
-- The JAR on the releases page is built on Linux and carries the Linux JavaFX libraries
-  only. With the JavaFX SDK for your operating system on the module path those bundled
-  copies are ignored. That setup was verified on Linux only.
+- The released JAR bundles Linux JavaFX libraries and supports Linux only. Build from
+  source on another operating system; those builds have not been verified.
 
 ## Development
 

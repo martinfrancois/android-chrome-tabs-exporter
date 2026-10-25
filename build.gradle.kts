@@ -139,7 +139,7 @@ java {
 }
 
 tasks.jar {
-    manifest.attributes["Main-Class"] = "com.github.martinfrancois.MainUi"
+    manifest.attributes["Main-Class"] = "com.github.martinfrancois.Launcher"
 }
 
 tasks.shadowJar {

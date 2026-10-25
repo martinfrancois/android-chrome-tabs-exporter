@@ -55,7 +55,8 @@
       "automerge": false,
       "addLabels": [
         "major update"
-      ]
+      ],
+      "description": "Major updates require human review."
     },
     {
       "description": "jSystemThemeDetector links against oshi-core at class initialisation time and both exclude the stock jna in favour of jna-jpms, so the three move together and get a launch check instead of automerge.",
