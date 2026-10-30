@@ -1,6 +1,7 @@
 plugins {
     id("java")
     id("jacoco")
+    id("distribution")
     id("com.gradleup.shadow") version "9.6.1"
     id("org.openjfx.javafxplugin") version "0.1.0"
 }
@@ -151,9 +152,35 @@ tasks.processResources {
 
 tasks.shadowJar {
     archiveFileName.set("android-chrome-tabs-exporter.jar")
+    // JavaFX must retain its named modules rather than enter the shaded classpath.
+    dependencies {
+        exclude(dependency("org.openjfx:.*:.*"))
+    }
     // Shadow merges Kotlin module metadata with a transformer, and the default EXCLUDE strategy
     // would drop a second file of the same name before the transformer sees it.
     filesMatching("META-INF/*.kotlin_module") {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
+}
+
+val javafxRuntime = configurations.runtimeClasspath.get().incoming.artifactView {
+    componentFilter {
+        it is org.gradle.api.artifacts.component.ModuleComponentIdentifier && it.group == "org.openjfx"
+    }
+}.files
+
+distributions {
+    main {
+        contents {
+            from(tasks.shadowJar) { into("lib") }
+            from(javafxRuntime) { into("modules") }
+            from("LICENSE", "NOTICE.md")
+            from("licenses") { into("licenses") }
+            filesMatching("bin/*") { permissions { unix("0755") } }
+        }
+    }
+}
+
+tasks.distZip {
+    archiveFileName.set("android-chrome-tabs-exporter-linux.zip")
 }
