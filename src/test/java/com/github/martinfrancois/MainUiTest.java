@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.prefs.BackingStoreException;
@@ -265,20 +266,28 @@ class MainUiTest {
         try {
             JavaFxToolkit.runAndWait(() -> buttonWithText("Export Android Tabs").fire());
 
-            waitUntil(() -> console().getText() != null
-                    && console().getText().contains("-----------------"));
-
-            assertThat(console().getText())
-                    .contains("Exporting Android Tabs...")
-                    .contains("ERROR:")
-                    .contains("-----------------");
-            assertThat(buttonWithText("Export Android Tabs").isDisabled())
-                    .as("the export button must be re-enabled once the task finishes")
-                    .isFalse();
+            waitUntilOnFxThread(this::exportHasFinished);
+            JavaFxToolkit.runAndWait(this::assertFailedExportReported);
         } finally {
             restoreProperty("https.proxyHost", savedProxyHost);
             restoreProperty("https.proxyPort", savedProxyPort);
         }
+    }
+
+    private boolean exportHasFinished() {
+        String text = console().getText();
+        return text != null && text.contains("-----------------")
+                && !buttonWithText("Export Android Tabs").isDisabled();
+    }
+
+    private void assertFailedExportReported() {
+        assertThat(console().getText())
+                .contains("Exporting Android Tabs...")
+                .contains("ERROR:")
+                .contains("-----------------");
+        assertThat(buttonWithText("Export Android Tabs").isDisabled())
+                .as("the export button must be re-enabled once the task finishes")
+                .isFalse();
     }
 
     private static void restoreProperty(String key, String value) {
@@ -289,11 +298,13 @@ class MainUiTest {
         }
     }
 
-    private static void waitUntil(BooleanSupplier condition) {
+    private static void waitUntilOnFxThread(BooleanSupplier condition) {
         Instant deadline = Instant.now().plus(Duration.ofSeconds(60));
+        AtomicBoolean satisfied = new AtomicBoolean();
         while (Instant.now().isBefore(deadline)) {
-            JavaFxToolkit.drainFxEvents();
-            if (condition.getAsBoolean()) {
+            // Draining queued events alone still lets the exporter append during a later read.
+            JavaFxToolkit.runAndWait(() -> satisfied.set(condition.getAsBoolean()));
+            if (satisfied.get()) {
                 return;
             }
             try {
