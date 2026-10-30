@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+app_home=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+java_command=java
+if [ -n "${JAVA_HOME:-}" ]; then
+    java_command=$JAVA_HOME/bin/java
+fi
+
+exec "$java_command" --module-path "$app_home/modules" --add-modules javafx.controls \
+    -jar "$app_home/lib/android-chrome-tabs-exporter.jar" "$@"
