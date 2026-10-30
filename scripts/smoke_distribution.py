@@ -72,6 +72,8 @@ def main():
                 text = log_path.read_text()
                 if "Unsupported JavaFX configuration" in text:
                     raise AssertionError('cannot accept JavaFX "unnamed module": put JavaFX on the module path')
+                if "AT-SPI: Error retrieving accessibility bus address" in text:
+                    raise AssertionError('cannot connect accessibility bus "org.a11y.Bus": install at-spi2-core and use dbus-run-session')
                 if " ERROR " in text or "Exception" in text:
                     raise AssertionError('cannot accept startup log "exception or error": inspect the startup log')
             finally:

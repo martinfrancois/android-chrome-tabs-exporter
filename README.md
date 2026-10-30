@@ -151,11 +151,11 @@ need no display.
 
 CI also launches the release ZIP under Xvfb, checks that the application window opens
 without the unsupported JavaFX configuration warning, and stops it with SIGTERM.
-To run that check locally, install Xvfb, xauth, x11-utils and GTK 3, then run:
+To run that check locally, install Xvfb, xauth, x11-utils, GTK 3, at-spi2-core and dbus-daemon, then run:
 
 ```bash
 ./gradlew distZip
-xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
+dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
 ```
 
 An unavailable display exits with status 2; packaging or startup failures exit with
