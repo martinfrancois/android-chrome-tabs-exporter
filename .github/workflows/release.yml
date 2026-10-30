@@ -39,8 +39,8 @@ jobs:
       - name: Test the packaged Linux application
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xauth x11-utils libgtk-3-0
-          xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
+          sudo apt-get install -y --no-install-recommends xvfb xauth x11-utils libgtk-3-0 at-spi2-core dbus-daemon
+          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
 
       - id: date
         run: echo "date=$(date --utc +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
