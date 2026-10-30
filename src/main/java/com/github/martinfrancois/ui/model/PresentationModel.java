@@ -5,6 +5,9 @@ import com.jthemedetecor.OsThemeDetector;
 import javafx.application.Platform;
 import javafx.beans.property.*;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
@@ -23,6 +26,10 @@ public class PresentationModel {
 
 
     public PresentationModel() {
+        this(System.getProperty("os.name"), System.getenv("PATH"));
+    }
+
+    PresentationModel(String osName, String executablePath) {
         // Set initial directory to user's home directory
         updatePath(System.getProperty("user.home"));
 
@@ -34,18 +41,38 @@ public class PresentationModel {
 
         // Dark mode handling
         String savedThemeName = prefs.get(THEME_PREFERENCE_KEY, null);
-        if (savedThemeName == null) {
+        if (savedThemeName != null) {
+            setTheme(Theme.valueOf(savedThemeName));
+        } else if ("Linux".equalsIgnoreCase(osName) && !hasGsettings(executablePath)) {
+            setTheme(Theme.LIGHT);
+        } else {
             final OsThemeDetector detector = OsThemeDetector.getDetector();
-            Consumer<Boolean> darkThemeListener = isDark -> {
-                String savedTheme = prefs.get(THEME_PREFERENCE_KEY, null);
-                if(savedTheme == null) { // do not override user's preference
-                    Platform.runLater(() -> setTheme(isDark ? Theme.DARK : Theme.LIGHT));
-                }
-            };
+            Consumer<Boolean> darkThemeListener = this::applySystemTheme;
             darkThemeListener.accept(detector.isDark()); // Apply initial theme
             detector.registerListener(darkThemeListener);
-        } else {
-            setTheme(Theme.valueOf(savedThemeName));
+        }
+    }
+
+    static boolean hasGsettings(String executablePath) {
+        if (executablePath == null) {
+            return false;
+        }
+        for (String directory : executablePath.split(File.pathSeparator, -1)) {
+            Path command = Path.of(directory).resolve("gsettings");
+            if (Files.isRegularFile(command) && Files.isExecutable(command)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void applySystemTheme(boolean isDark) {
+        Platform.runLater(() -> applySystemThemeUnlessSaved(isDark));
+    }
+
+    private void applySystemThemeUnlessSaved(boolean isDark) {
+        if (prefs.get(THEME_PREFERENCE_KEY, null) == null) {
+            setTheme(isDark ? Theme.DARK : Theme.LIGHT);
         }
     }
 
