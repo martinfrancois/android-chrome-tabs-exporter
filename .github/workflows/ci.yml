@@ -41,9 +41,9 @@ jobs:
       - name: Test the packaged Linux application
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends xvfb xauth x11-utils libgtk-3-0
+          sudo apt-get install -y --no-install-recommends xvfb xauth x11-utils libgtk-3-0 at-spi2-core dbus-daemon
           ./gradlew --no-daemon distZip
-          xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
+          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
 
       # Uploaded on failure too, so a run that misses the coverage gate shows which lines.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
