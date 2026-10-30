@@ -135,3 +135,5 @@ need no display.
 ## License
 
 MIT, see `LICENSE`. The bundled Material Symbols font is Apache 2.0, see `NOTICE.md`.
+Both JARs include these notices and the Apache license text under
+`META-INF/android-chrome-tabs-exporter/`.

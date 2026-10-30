@@ -142,6 +142,13 @@ tasks.jar {
     manifest.attributes["Main-Class"] = "com.github.martinfrancois.Launcher"
 }
 
+tasks.processResources {
+    from(listOf("LICENSE", "NOTICE.md", "licenses/Apache-2.0.txt")) {
+        // Keep project and font notices separate from bundled dependencies' notices.
+        into("META-INF/android-chrome-tabs-exporter")
+    }
+}
+
 tasks.shadowJar {
     archiveFileName.set("android-chrome-tabs-exporter.jar")
     // Shadow merges Kotlin module metadata with a transformer, and the default EXCLUDE strategy
