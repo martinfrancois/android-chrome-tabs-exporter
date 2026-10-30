@@ -34,14 +34,28 @@ Windows and macOS, but no automated check covers them.
 
 ## Install
 
-Either download `android-chrome-tabs-exporter.jar` from the latest entry on the releases
-page, or build it:
+Either download `android-chrome-tabs-exporter-linux.zip` from the latest entry on the
+releases page, or build it:
 
 ```bash
-./gradlew shadowJar
+./gradlew distZip
 ```
 
-The JAR lands in `build/libs/android-chrome-tabs-exporter.jar`.
+The archive lands in `build/distributions/android-chrome-tabs-exporter-linux.zip`.
+Extract the whole archive. Its launcher loads the bundled JavaFX modules from
+`modules/` and the application from `lib/`; keep those directories together.
+Java 21 or newer must be on PATH, or set `JAVA_HOME` to its installation directory.
+
+For a source build on Windows or macOS, run `gradlew.bat installDist` or
+`./gradlew installDist` on that operating system. Gradle resolves its native JavaFX
+libraries. From `build/install/android-chrome-tabs-exporter`, run:
+
+```text
+java --module-path modules --add-modules javafx.controls -jar lib/android-chrome-tabs-exporter.jar
+```
+
+These source-build paths are not covered by CI. The Linux release archive does not
+contain the native libraries for Windows or macOS.
 
 ## Phone setup
 
@@ -56,7 +70,7 @@ The JAR lands in `build/libs/android-chrome-tabs-exporter.jar`.
 ## Usage
 
 ```bash
-java -jar android-chrome-tabs-exporter.jar
+./android-chrome-tabs-exporter-linux/bin/android-chrome-tabs-exporter
 ```
 
 In the window that opens, click "Choose Directory", pick where the Excel file should go,
@@ -69,6 +83,9 @@ errors. Messages you may see:
   DevTools endpoint. Open Chrome on the phone and try again.
 - "adb command did not behave as expected." adb printed an error the app does not
   recognise. Its full output is in the text area.
+
+On Linux without `gsettings` on PATH, the app starts with the light theme. The theme
+button still works, and a saved theme choice takes precedence over automatic detection.
 
 ## Output
 
@@ -118,7 +135,7 @@ changing the socket name in `AdbHandler`.
 - URLs are compared case-sensitively, so `https://Example.com` and `https://example.com`
   produce two rows.
 - Only title and URL are exported. Nothing else from the DevTools listing is kept.
-- The released JAR bundles Linux JavaFX libraries and supports Linux only. Build from
+- The release archive bundles Linux JavaFX libraries and supports Linux only. Build from
   source on another operating system; those builds have not been verified.
 
 ## Development
@@ -132,8 +149,21 @@ download the real `platform-tools` archive and execute the real `adb` binary, so
 network access. The UI tests run the real JavaFX toolkit headlessly through Monocle and
 need no display.
 
+CI also launches the release ZIP under Xvfb, checks that the application window opens
+without the unsupported JavaFX configuration warning, and stops it with SIGTERM.
+To run that check locally, install Xvfb, xauth, x11-utils and GTK 3, then run:
+
+```bash
+./gradlew distZip
+xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
+```
+
+An unavailable display exits with status 2; packaging or startup failures exit with
+status 1. The smoke test does not connect a phone or perform an export.
+
 ## License
 
 MIT, see `LICENSE`. The bundled Material Symbols font is Apache 2.0, see `NOTICE.md`.
 Both JARs include these notices and the Apache license text under
 `META-INF/android-chrome-tabs-exporter/`.
+The distribution also includes `LICENSE`, `NOTICE.md` and `licenses/Apache-2.0.txt`.
