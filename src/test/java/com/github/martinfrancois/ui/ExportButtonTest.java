@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui;
 
-import com.github.martinfrancois.MainUi;
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -34,7 +33,7 @@ class ExportButtonTest {
             button = new ExportButton(exporting);
             stage = new Stage();
             Scene scene = new Scene(new StackPane(button), 300, 100);
-            MainUi.applyStyles(scene);
+            Styles.apply(scene);
             stage.setScene(scene);
             stage.show();
         });

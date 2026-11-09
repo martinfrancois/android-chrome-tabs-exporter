@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui.model;
 
-import com.github.martinfrancois.MainUi;
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
 import com.jthemedetecor.OsThemeDetector;
 import org.junit.jupiter.api.BeforeAll;
@@ -107,7 +106,7 @@ class OsThemeDetectorLaunchTest {
     @Test
     void presentationModelAdoptsTheOperatingSystemThemeOnFirstLaunch() throws BackingStoreException {
         Theme expected = OsThemeDetector.getDetector().isDark() ? Theme.DARK : Theme.LIGHT;
-        Preferences prefs = Preferences.userNodeForPackage(MainUi.class);
+        Preferences prefs = Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE);
         String saved = prefs.get(THEME_PREFERENCE_KEY, null);
         prefs.remove(THEME_PREFERENCE_KEY);
         prefs.flush();

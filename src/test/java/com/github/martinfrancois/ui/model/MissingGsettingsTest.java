@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui.model;
 
-import com.github.martinfrancois.MainUi;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,7 @@ class MissingGsettingsTest {
     @TempDir
     Path directory;
 
-    private final Preferences prefs = Preferences.userNodeForPackage(MainUi.class);
+    private final Preferences prefs = Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE);
     private String savedTheme;
 
     @BeforeEach

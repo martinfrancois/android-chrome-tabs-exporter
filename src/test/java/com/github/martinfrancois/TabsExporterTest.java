@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.github.martinfrancois.model.Tab;
+import com.github.martinfrancois.testsupport.UtilityClasses;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,13 +16,13 @@ import java.util.TreeSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class MainTest {
+class TabsExporterTest {
 
     private static final LocalDate EXPORT_DATE = LocalDate.of(2026, 11, 9);
 
     @Test
     void firstExportOfTheDayUsesThePlainName(@TempDir Path directory) throws IOException {
-        Path exportFile = Main.createExportFile(directory, EXPORT_DATE);
+        Path exportFile = TabsExporter.createExportFile(directory, EXPORT_DATE);
 
         assertThat(exportFile).isEqualTo(directory.resolve("2026-11-09 Android Tabs.xlsx"));
         assertThat(exportFile).isEmptyFile();
@@ -29,12 +30,12 @@ class MainTest {
 
     @Test
     void laterExportsOfTheSameDayKeepTheEarlierFiles(@TempDir Path directory) throws IOException {
-        Path firstPhone = Main.createExportFile(directory, EXPORT_DATE);
+        Path firstPhone = TabsExporter.createExportFile(directory, EXPORT_DATE);
         Files.writeString(firstPhone, "first phone");
-        Path secondPhone = Main.createExportFile(directory, EXPORT_DATE);
+        Path secondPhone = TabsExporter.createExportFile(directory, EXPORT_DATE);
         Files.writeString(secondPhone, "second phone");
 
-        Path thirdPhone = Main.createExportFile(directory, EXPORT_DATE);
+        Path thirdPhone = TabsExporter.createExportFile(directory, EXPORT_DATE);
 
         assertThat(secondPhone).isEqualTo(directory.resolve("2026-11-09 Android Tabs (2).xlsx"));
         assertThat(thirdPhone).isEqualTo(directory.resolve("2026-11-09 Android Tabs (3).xlsx"));
@@ -48,10 +49,19 @@ class MainTest {
         TreeSet<Tab> tabs = new TreeSet<>(Comparator.comparing(Tab::url));
         tabs.add(new Tab("x".repeat(40_000), "example.com"));
 
-        assertThatThrownBy(() -> Main.writeExport(directory, EXPORT_DATE, tabs)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TabsExporter.writeExport(directory, EXPORT_DATE, tabs)).isInstanceOf(IllegalArgumentException.class);
 
         try (var remaining = Files.list(directory)) {
             assertThat(remaining).isEmpty();
         }
+    }
+
+    @Test
+    void utilityClassCannotBeInstantiated() throws Exception {
+        Throwable thrown = UtilityClasses.invokeConstructorAndCaptureThrowable(TabsExporter.class);
+
+        assertThat(thrown)
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("utility class");
     }
 }

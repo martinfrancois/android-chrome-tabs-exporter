@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui.model;
 
-import com.github.martinfrancois.MainUi;
 import com.jthemedetecor.OsThemeDetector;
 import javafx.application.Platform;
 import javafx.beans.property.*;
@@ -14,6 +13,11 @@ import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 
 public class PresentationModel {
+    /**
+     * Where the theme preference is stored. Released versions store it in this node, which was
+     * the package of their window class, so it stays here to keep the user's choice.
+     */
+    public static final String PREFERENCES_NODE = "/com/github/martinfrancois";
     private static final String PATH_PLACEHOLDER = "No directory selected";
     private static final String THEME_PREFERENCE_KEY = "themePreference";
 
@@ -25,7 +29,7 @@ public class PresentationModel {
     private final BooleanProperty executable = new SimpleBooleanProperty();
     private final ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
 
-    private final Preferences prefs = Preferences.userNodeForPackage(MainUi.class);
+    private final Preferences prefs = Preferences.userRoot().node(PREFERENCES_NODE);
 
 
     public PresentationModel() {

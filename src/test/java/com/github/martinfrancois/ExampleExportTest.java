@@ -23,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Runs the export pipeline on the synthetic DevTools payload in {@code examples/tabs.json}
  * and leaves the resulting workbook in {@code build/examples/tabs.xlsx}.
  *
- * <p>This is the same code path {@link Main#export} takes after the JSON has arrived from the
+ * <p>This is the same code path {@link TabsExporter#export} takes after the JSON has arrived from the
  * phone: parse, deduplicate, sort, write. Only the adb and HTTP steps are skipped, because they
  * need a device. The README documents this test as the way to see the output without a phone.
  */
