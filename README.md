@@ -78,7 +78,8 @@ then click "Export Android Tabs". The text area below the button shows progress 
 errors. Messages you may see:
 
 - "No android device found." The phone is not connected, not unlocked, or USB debugging
-  is off. The app retries every 3 seconds until a device shows up.
+  is off. The message also suggests opening Chrome, replugging the cable, and trying
+  another USB port or cable. The app retries every 3 seconds until a device shows up.
 - "Failed to connect to the phone." The port forward worked but nothing answered on the
   DevTools endpoint. Open Chrome on the phone and try again.
 - "adb command did not behave as expected." adb printed an error the app does not
