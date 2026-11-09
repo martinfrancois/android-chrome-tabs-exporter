@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Mounts the .dmg, starts the application from it and waits for its window, then stops it.
+# Installs the application from the .dmg into /Applications the way a user drags it there, starts
+# it and waits for its window, then stops it and removes it.
 # Run on a macOS CI runner. A window's title needs the screen recording permission, which a runner
 # does not grant, so the check looks for an on-screen window that the application's process owns.
 set -euo pipefail
@@ -9,26 +10,35 @@ if [ "$#" -ne 1 ]; then
     exit 2
 fi
 
+app_name="Android Chrome Tabs Exporter.app"
+app="/Applications/$app_name"
+if [ -e "$app" ]; then
+    echo "cannot install application \"$app\": it already exists" >&2
+    exit 1
+fi
 mount_point=$(mktemp -d)
 hdiutil attach -nobrowse -readonly -mountpoint "$mount_point" "$1" >/dev/null
+if [ ! -d "$mount_point/$app_name" ]; then
+    hdiutil detach "$mount_point" >/dev/null
+    echo "cannot find application \"$app_name\": expected the application bundle in the disk image" >&2
+    exit 1
+fi
+ditto "$mount_point/$app_name" "$app"
+hdiutil detach "$mount_point" >/dev/null
+
 log=$(mktemp)
 pid=""
 cleanup() {
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
-        kill "$pid"
+        kill "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
     fi
     cat "$log"
-    hdiutil detach "$mount_point" >/dev/null
+    rm -rf "${app:?}"
 }
 trap cleanup EXIT
 
-app="$mount_point/Android Chrome Tabs Exporter.app"
 launcher="$app/Contents/MacOS/Android Chrome Tabs Exporter"
-if [ ! -x "$launcher" ]; then
-    echo "cannot execute launcher \"$launcher\": expected the application bundle in the disk image" >&2
-    exit 1
-fi
 
 script_dir=$(cd "$(dirname "$0")" && pwd)
 window_check=$(mktemp)
@@ -48,7 +58,7 @@ for _ in $(seq 1 150); do
             echo 'cannot accept startup log "exception or error": inspect the startup log' >&2
             exit 1
         fi
-        echo "PASS: application window opened from the disk image"
+        echo "PASS: installed application opened its window"
         exit 0
     fi
     sleep 0.2

@@ -1,5 +1,5 @@
 # Packs the Linux app image that `./gradlew jpackage` builds, Java runtime included, for Arch Linux.
-# The release workflow builds it with makepkg after placing android-chrome-tabs-exporter-app-image.tar.gz
+# The installers workflow builds it with makepkg after placing android-chrome-tabs-exporter-app-image.tar.gz
 # next to this file and setting PKGVER.
 pkgname=android-chrome-tabs-exporter
 pkgver=${PKGVER:-1.0.0}

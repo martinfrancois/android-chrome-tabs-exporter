@@ -27,4 +27,12 @@ JDK the build uses. It is OpenJDK, licensed under the GNU General Public License
 version 2, with the Classpath Exception. Its license texts and notices ship with it,
 in the `legal` directory of the bundled runtime.
 
-- Source: https://github.com/adoptium/temurin21-binaries
+- Source: https://github.com/adoptium/jdk21u, at the tag of the Temurin version that
+  `.github/workflows/installers.yml` sets up; the bundled runtime names it in its `release` file
+
+## JavaFX
+
+The release ZIP and the installers bundle the OpenJFX 21 modules from Maven Central. OpenJFX is
+licensed under the GNU General Public License, version 2, with the Classpath Exception.
+
+- Source: https://github.com/openjdk/jfx

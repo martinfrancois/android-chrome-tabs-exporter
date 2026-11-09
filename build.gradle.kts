@@ -1,4 +1,3 @@
-import org.gradle.internal.os.OperatingSystem
 
 plugins {
     id("java")
@@ -207,22 +206,26 @@ tasks.distZip {
 // version the installer records; Windows only upgrades over an installed copy with a lower one.
 val installerType = providers.gradleProperty("installerType").orElse("app-image")
 val installerVersion = providers.gradleProperty("installerVersion").orElse("1.0.0")
-val jpackageExecutable = javaToolchains.launcherFor {
-    languageVersion.set(JavaLanguageVersion.of(21))
-}.map { launcher ->
-    val name = if (OperatingSystem.current().isWindows) "jpackage.exe" else "jpackage"
+val hostOs = System.getProperty("os.name").lowercase()
+val hostIsWindows = hostOs.startsWith("windows")
+val hostIsMac = hostOs.startsWith("mac")
+val hostIsLinux = hostOs.startsWith("linux")
+val jpackageExecutable = javaToolchains.launcherFor(java.toolchain).map { launcher ->
+    val name = if (hostIsWindows) "jpackage.exe" else "jpackage"
     launcher.metadata.installationPath.file("bin/$name").asFile.absolutePath
 }
+val jpackageInputDirectory = layout.buildDirectory.dir("jpackage/input")
+val jpackageModulesDirectory = layout.buildDirectory.dir("jpackage/modules/modules")
 
 // jpackage puts every JAR under --input on the class path, so JavaFX goes in through --app-content
 // and reaches the application only as named modules, like in the ZIP.
 val jpackageInput = tasks.register<Sync>("jpackageInput") {
-    into(layout.buildDirectory.dir("jpackage/input"))
+    into(jpackageInputDirectory)
     with(applicationFiles)
 }
 
 val jpackageModules = tasks.register<Sync>("jpackageModules") {
-    into(layout.buildDirectory.dir("jpackage/modules/modules"))
+    into(jpackageModulesDirectory)
     from(javafxRuntime)
 }
 
@@ -230,8 +233,8 @@ tasks.register<Exec>("jpackage") {
     description = "Builds a native installer with a bundled Java runtime. -PinstallerType=app-image|deb|rpm|msi|dmg"
     group = "distribution"
     dependsOn(jpackageInput, jpackageModules)
-    val input = layout.buildDirectory.dir("jpackage/input")
-    val modules = layout.buildDirectory.dir("jpackage/modules/modules")
+    val input = jpackageInputDirectory
+    val modules = jpackageModulesDirectory
     // One directory per type, so building a deb and then an rpm keeps both.
     val output = installerType.flatMap { layout.buildDirectory.dir("jpackage/$it") }
     inputs.dir(input)
@@ -241,13 +244,12 @@ tasks.register<Exec>("jpackage") {
     outputs.dir(output)
     doFirst {
         // jpackage refuses to write an app image into a directory that already holds one.
-        delete(output)
+        output.get().asFile.deleteRecursively()
         executable(jpackageExecutable.get())
     }
     argumentProviders.add(CommandLineArgumentProvider {
-        val os = OperatingSystem.current()
         // Linux package and directory names stay lowercase; Windows and macOS show the name to users.
-        val name = if (os.isLinux) "android-chrome-tabs-exporter" else "Android Chrome Tabs Exporter"
+        val name = if (hostIsLinux) "android-chrome-tabs-exporter" else "Android Chrome Tabs Exporter"
         val arguments = mutableListOf(
             "--type", installerType.get(),
             "--name", name,
@@ -269,14 +271,18 @@ tasks.register<Exec>("jpackage") {
             when {
                 // The Linux packages install the license as their copyright file. The .msi and .dmg
                 // get none: there it becomes a license agreement to accept, which MIT does not need.
-                os.isLinux -> arguments += listOf(
+                hostIsLinux -> arguments += listOf(
                     "--license-file", file("LICENSE").absolutePath,
                     "--linux-shortcut",
                     "--linux-menu-group", "Utility",
                     "--linux-deb-maintainer", "f.martin@fastmail.com",
                     "--linux-rpm-license-type", "MIT",
+                    // JavaFX loads GTK and libXtst from native libraries it unpacks at startup, so
+                    // the package tools cannot find these dependencies by scanning the package.
+                    "--linux-package-deps",
+                    if (installerType.get() == "rpm") "gtk3, libXtst" else "libgtk-3-0t64 | libgtk-3-0, libxtst6",
                 )
-                os.isWindows -> arguments += listOf(
+                hostIsWindows -> arguments += listOf(
                     "--win-menu",
                     "--win-shortcut",
                     "--win-dir-chooser",
@@ -285,7 +291,7 @@ tasks.register<Exec>("jpackage") {
                 )
             }
         }
-        if (os.isMacOsX) {
+        if (hostIsMac) {
             arguments += listOf("--mac-package-identifier", "com.github.martinfrancois.android-chrome-tabs-exporter")
         }
         arguments

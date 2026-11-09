@@ -32,8 +32,9 @@ A small JavaFX desktop app with one button. When you click "Export Android Tabs"
 - Java 21 or newer, only for the ZIP archive and source builds. The installers bring
   their own Java runtime.
 
-The build and the tests run on Linux in CI. The download step has separate code paths for
-Windows and macOS, but no automated check covers them.
+The build and the tests run on Linux in CI, and CI starts the installed application on
+Windows and macOS. The download step has separate code paths for Windows and macOS, but no
+automated check covers them.
 
 ## Install
 

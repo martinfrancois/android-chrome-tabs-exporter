@@ -39,7 +39,7 @@ jobs:
       - name: Install the packaging tools and the display for the launch check
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends fakeroot rpm xvfb xauth x11-utils libgtk-3-0 at-spi2-core dbus-daemon
+          sudo apt-get install -y --no-install-recommends fakeroot rpm xvfb xauth x11-utils at-spi2-core dbus-daemon
 
       - name: Build the app image, the .deb and the .rpm
         env:

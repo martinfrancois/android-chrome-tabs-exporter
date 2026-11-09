@@ -53,7 +53,9 @@ jobs:
           path: build/reports/jacoco/test/
           if-no-files-found: warn
 
+  # On pushes to main the release workflow builds and checks the installers.
   installers:
+    if: github.event_name == 'pull_request'
     uses: ./.github/workflows/installers.yml
     with:
       version: "1.0.0"
