@@ -146,7 +146,7 @@ public class PresentationModel {
         return inProgress.get();
     }
 
-    private BooleanProperty inProgressProperty() {
+    public ReadOnlyBooleanProperty inProgressProperty() {
         return inProgress;
     }
 

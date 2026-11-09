@@ -28,3 +28,16 @@
 .console .list-cell:error:selected {
     -fx-text-fill: -fx-selection-bar-text;
 }
+
+/*
+ * A disabled button fades everything in it. While it exports, the export button stays disabled but
+ * isn't faded, because its text and spinner tell the user what is happening and need their contrast.
+ */
+.export-button:exporting {
+    -fx-opacity: 1;
+}
+
+/* The spinner needs 3:1 against the button: dark blue on the light theme, light blue on the dark one. */
+.export-spinner {
+    -fx-stroke: ladder(-fx-base, #8ecaff 49%, #00508f 50%);
+}

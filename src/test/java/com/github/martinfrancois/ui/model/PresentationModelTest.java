@@ -126,11 +126,13 @@ class PresentationModelTest {
         assertThat(model.executableProperty().get()).isTrue();
 
         model.startProgress();
+        assertThat(model.inProgressProperty().get()).isTrue();
         assertThat(model.executableProperty().get())
                 .as("export button must be disabled while an export runs")
                 .isFalse();
 
         model.stopProgress();
+        assertThat(model.inProgressProperty().get()).isFalse();
         assertThat(model.executableProperty().get()).isTrue();
     }
 
