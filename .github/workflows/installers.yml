@@ -53,11 +53,11 @@ jobs:
           cp build/jpackage/rpm/*.rpm installers/android-chrome-tabs-exporter-linux-x86_64.rpm
           tar -C build/jpackage/app-image -czf installers/android-chrome-tabs-exporter-app-image.tar.gz android-chrome-tabs-exporter
 
-      # The packages register their menu entry with xdg-desktop-menu, which fails without the menu
-      # directory that every desktop environment provides and a runner or container lacks.
+      # The packages register their menu entry with xdg-desktop-menu, which fails unless the menu
+      # directories that every desktop environment provides exist; a runner or container lacks them.
       - name: Install the .deb and open the application
         run: |
-          sudo mkdir -p /etc/xdg/menus
+          sudo mkdir -p /etc/xdg/menus /usr/share/applications /usr/share/desktop-directories
           sudo apt-get install -y ./installers/android-chrome-tabs-exporter-linux-amd64.deb
           dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
 
@@ -85,7 +85,7 @@ jobs:
       - name: Install the .rpm and open the application
         run: |
           dnf install -y python3 xorg-x11-server-Xvfb xorg-x11-xauth xwininfo at-spi2-core dbus-daemon xdg-utils
-          mkdir -p /etc/xdg/menus
+          mkdir -p /etc/xdg/menus /usr/share/applications /usr/share/desktop-directories
           dnf install -y ./installers/android-chrome-tabs-exporter-linux-x86_64.rpm
           dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
 

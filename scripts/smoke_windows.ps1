@@ -18,27 +18,27 @@ if (-not (Test-Path $exe)) {
     throw "cannot find launcher `"$exe`": expected the default installation directory"
 }
 
+# Look the window up by process name: in CI the started launcher process never reported it, while
+# a process with the launcher's name owned it.
 $application = Start-Process $exe -PassThru
 try {
+    $window = $null
     $deadline = (Get-Date).AddSeconds(60)
-    while ((Get-Date) -lt $deadline) {
+    while (-not $window -and (Get-Date) -lt $deadline) {
         $application.Refresh()
         if ($application.HasExited) {
             throw "cannot start application `"exit $($application.ExitCode)`": the launcher stopped before its window opened"
         }
-        if ($application.MainWindowTitle -eq $title) {
-            break
-        }
+        $window = Get-Process -Name $title -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle -eq $title }
         Start-Sleep -Milliseconds 200
     }
-    if ($application.MainWindowTitle -ne $title) {
+    if (-not $window) {
         Get-Process | Where-Object { $_.MainWindowTitle } | Format-Table Id, ProcessName, MainWindowTitle -AutoSize | Out-String | Write-Output
+        Write-Output "Started launcher process: $($application.Id)"
         throw "cannot find window `"$title`": no window with that title within 60 seconds"
     }
 } finally {
-    if (-not $application.HasExited) {
-        Stop-Process -Id $application.Id -Force
-    }
+    Get-Process -Name $title -ErrorAction SilentlyContinue | Stop-Process -Force
 }
 
 $uninstall = Start-Process msiexec.exe -ArgumentList '/x', "`"$msi`"", '/qn' -Wait -PassThru
