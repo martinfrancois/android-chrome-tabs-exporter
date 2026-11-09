@@ -161,6 +161,15 @@ tasks.shadowJar {
     filesMatching("META-INF/*.kotlin_module") {
         duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
+    // Most bundled Apache projects ship their notice under the same two names, and section 4(d)
+    // of the Apache License asks a redistribution to keep each one. poi and poi-ooxml also both
+    // register a WorkbookProvider. Every copy is merged, so none is dropped as a duplicate.
+    val notices = listOf("META-INF/NOTICE", "META-INF/NOTICE.txt")
+    notices.forEach { append(it) }
+    mergeServiceFiles()
+    filesMatching(notices + "META-INF/services/**") {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }
 
 val javafxRuntime = configurations.runtimeClasspath.get().incoming.artifactView {
