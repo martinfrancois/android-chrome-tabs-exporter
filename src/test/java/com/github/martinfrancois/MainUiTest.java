@@ -3,6 +3,7 @@ package com.github.martinfrancois;
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
 import com.github.martinfrancois.ui.ConsoleView;
 import com.github.martinfrancois.ui.ExportButton;
+import com.github.martinfrancois.ui.FxThreadConsole;
 import com.github.martinfrancois.ui.model.ConsoleLine;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.collections.FXCollections;
@@ -446,6 +447,26 @@ class MainUiTest {
             restoreProperty("https.proxyHost", savedProxyHost);
             restoreProperty("https.proxyPort", savedProxyPort);
         }
+    }
+
+    @Test
+    void exportConsoleMessagesFromABackgroundThreadReachTheConsoleInOrder() throws InterruptedException {
+        JavaFxToolkit.runAndWait(() -> mainUi.model().clearConsole());
+        FxThreadConsole exportConsole = new FxThreadConsole(mainUi.model());
+
+        Thread export = new Thread(() -> reportProgressThenError(exportConsole));
+        export.start();
+        export.join();
+        JavaFxToolkit.drainFxEvents();
+
+        assertThat(console().getItems()).containsExactly(
+                new ConsoleLine("Found 3 tabs.", false),
+                new ConsoleLine("ERROR: Failed to delete ADB executable.", true));
+    }
+
+    private static void reportProgressThenError(FxThreadConsole exportConsole) {
+        exportConsole.progress("Found 3 tabs.");
+        exportConsole.error("Failed to delete ADB executable.");
     }
 
     private boolean exportHasFinished() {

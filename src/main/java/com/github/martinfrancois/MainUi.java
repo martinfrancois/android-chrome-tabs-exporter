@@ -2,6 +2,7 @@ package com.github.martinfrancois;
 
 import com.github.martinfrancois.ui.ConsoleView;
 import com.github.martinfrancois.ui.ExportButton;
+import com.github.martinfrancois.ui.FxThreadConsole;
 import com.github.martinfrancois.ui.model.PresentationModel;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.application.Application;
@@ -145,7 +146,7 @@ public class MainUi extends Application {
         return new Task<>() {
             @Override
             protected Boolean call() {
-                boolean success = Main.export(appendText -> Platform.runLater(() -> model.appendConsoleText(appendText)), appendError -> Platform.runLater(() -> model.appendConsoleError(appendError)), model.getPath());
+                boolean success = Main.export(model.getPath(), new FxThreadConsole(model));
                 if (success) {
                     openDirectory(new File(model.getPath()));
                 }
@@ -195,6 +196,4 @@ public class MainUi extends Application {
             }
         }
     }
-
 }
-

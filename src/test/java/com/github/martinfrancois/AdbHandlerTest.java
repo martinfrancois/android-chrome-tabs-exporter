@@ -61,8 +61,7 @@ class AdbHandlerTest {
     private Path workRoot;
     private Path stubDir;
     private String savedTmpDir;
-    private CapturedConsole classConsole;
-    private CapturedConsole console;
+    private final CapturedConsole console = new CapturedConsole();
     private AdbHandler handler;
     private File realAdbExecutable;
 
@@ -71,12 +70,11 @@ class AdbHandlerTest {
         workRoot = Files.createTempDirectory("adb-handler-test");
         stubDir = Files.createDirectory(workRoot.resolve("stubs"));
         savedTmpDir = System.getProperty("java.io.tmpdir");
-        classConsole = new CapturedConsole();
 
         // AdbHandler extracts into java.io.tmpdir; give it a directory of its own so the tests
         // never fight over the shared system temp directory.
         System.setProperty("java.io.tmpdir", Files.createDirectory(workRoot.resolve("shared")).toString());
-        handler = new AdbHandler();
+        handler = new AdbHandler(console);
         realAdbExecutable = currentAdbExecutable(handler);
         System.setProperty("java.io.tmpdir", savedTmpDir);
     }
@@ -89,19 +87,17 @@ class AdbHandlerTest {
         } finally {
             handler.close();
             System.setProperty("java.io.tmpdir", savedTmpDir);
-            classConsole.close();
         }
     }
 
     @BeforeEach
-    void captureConsole() {
-        console = new CapturedConsole();
+    void forgetEarlierMessages() {
+        console.clear();
     }
 
     @AfterEach
-    void releaseConsole() throws Exception {
+    void restoreRealAdbExecutable() throws Exception {
         setAdbExecutable(handler, realAdbExecutable);
-        console.close();
     }
 
     // ------------------------------------------------------------------ download & lifecycle
@@ -145,7 +141,7 @@ class AdbHandlerTest {
         AdbHandler own;
         File executable;
         try {
-            own = new AdbHandler();
+            own = new AdbHandler(console);
             executable = currentAdbExecutable(own);
         } finally {
             System.setProperty("java.io.tmpdir", savedTmpDir);

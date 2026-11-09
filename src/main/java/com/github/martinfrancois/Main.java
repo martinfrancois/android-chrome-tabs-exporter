@@ -11,29 +11,23 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.TreeSet;
-import java.util.function.Consumer;
 
 public class Main {
     private static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
     private static final String FILENAME_SUFFIX = " Android Tabs";
     private static final String DEFAULT_ADB_PORT = "50000";
 
-    public static Consumer<String> updateProgress; // TODO implement more nicely
-    public static Consumer<String> updateError; // TODO implement more nicely
-
-    public static boolean export(Consumer<String> updateProgress, Consumer<String> updateError, String filePath) {
-        Main.updateProgress = updateProgress;
-        Main.updateError = updateError;
-        try (AdbHandler adbHandler = new AdbHandler()) {
+    public static boolean export(String filePath, ExportConsole console) {
+        try (AdbHandler adbHandler = new AdbHandler(console)) {
             String port = adbHandler.forwardPortToChromeDevtools(DEFAULT_ADB_PORT);
-            String tabsJson = RequestHandler.get("http://localhost:" + port + "/json/list");
-            TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(tabsJson);
+            String tabsJson = RequestHandler.get("http://localhost:" + port + "/json/list", console);
+            TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(tabsJson, console);
 
             Path exportFile = writeExport(Path.of(filePath), LocalDate.now(), tabs);
-            Main.updateProgress.accept("Excel file created successfully: " + exportFile);
+            console.progress("Excel file created successfully: " + exportFile);
             return true;
         } catch(Exception e) {
-            Main.updateError.accept(Throwables.getStackTraceAsString(e));
+            console.error(Throwables.getStackTraceAsString(e));
             return false;
         }
     }

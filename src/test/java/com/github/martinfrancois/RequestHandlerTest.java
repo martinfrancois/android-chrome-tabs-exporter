@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RequestHandlerTest {
 
     private HttpServer server;
-    private CapturedConsole console;
+    private final CapturedConsole console = new CapturedConsole();
 
     /** Records what the server actually received, so we can assert on the wire behaviour. */
     private final AtomicReference<String> lastMethod = new AtomicReference<>();
@@ -41,7 +41,6 @@ class RequestHandlerTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        console = new CapturedConsole();
         server = HttpServer.create(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0);
         server.start();
     }
@@ -49,7 +48,6 @@ class RequestHandlerTest {
     @AfterEach
     void tearDown() {
         server.stop(0);
-        console.close();
     }
 
     private String baseUrl() {
@@ -78,7 +76,7 @@ class RequestHandlerTest {
         String body = "[{\"title\":\"Google\",\"url\":\"https://www.google.com\"}]";
         respondWith("/json/list", 200, body);
 
-        String result = RequestHandler.get(baseUrl() + "/json/list");
+        String result = RequestHandler.get(baseUrl() + "/json/list", console);
 
         assertThat(result).isEqualTo(body);
         assertThat(console.errors()).isEmpty();
@@ -88,7 +86,7 @@ class RequestHandlerTest {
     void issuesAGetRequestToTheExactPath() {
         respondWith("/json/list", 200, "[]");
 
-        RequestHandler.get(baseUrl() + "/json/list");
+        RequestHandler.get(baseUrl() + "/json/list", console);
 
         assertThat(lastMethod.get()).isEqualTo("GET");
         assertThat(lastPath.get()).isEqualTo("/json/list");
@@ -101,7 +99,7 @@ class RequestHandlerTest {
         String body = "[{\"title\":\"Ümlaut – café 😀 日本語\",\"url\":\"https://example.com\"}]";
         respondWith("/json/list", 200, body);
 
-        assertThat(RequestHandler.get(baseUrl() + "/json/list")).isEqualTo(body);
+        assertThat(RequestHandler.get(baseUrl() + "/json/list", console)).isEqualTo(body);
     }
 
     @Test
@@ -113,7 +111,7 @@ class RequestHandlerTest {
         String body = builder.toString();
         respondWith("/json/list", 200, body);
 
-        String result = RequestHandler.get(baseUrl() + "/json/list");
+        String result = RequestHandler.get(baseUrl() + "/json/list", console);
 
         assertThat(result).hasSize(body.length()).isEqualTo(body);
     }
@@ -122,7 +120,7 @@ class RequestHandlerTest {
     void returnsAnEmptyStringWhenTheDeviceReportsNoTabs() {
         respondWith("/json/list", 200, "");
 
-        assertThat(RequestHandler.get(baseUrl() + "/json/list")).isEmpty();
+        assertThat(RequestHandler.get(baseUrl() + "/json/list", console)).isEmpty();
     }
 
     @ParameterizedTest
@@ -130,7 +128,7 @@ class RequestHandlerTest {
     void reportsNonSuccessStatusCodesAndReturnsNull(int status) {
         respondWith("/json/list", status, "nope");
 
-        String result = RequestHandler.get(baseUrl() + "/json/list");
+        String result = RequestHandler.get(baseUrl() + "/json/list", console);
 
         assertThat(result).isNull();
         assertThat(console.errors())
@@ -146,7 +144,7 @@ class RequestHandlerTest {
         }
         String url = "http://" + InetAddress.getLoopbackAddress().getHostAddress() + ":" + deadPort + "/json/list";
 
-        assertThatThrownBy(() -> RequestHandler.get(url))
+        assertThatThrownBy(() -> RequestHandler.get(url, console))
                 .isInstanceOf(RuntimeException.class)
                 .cause()
                 .isInstanceOf(IOException.class);
@@ -159,7 +157,7 @@ class RequestHandlerTest {
     void reportsAConnectionFailureWhenTheHostCannotBeResolved() {
         String url = "http://this-host-does-not-exist.invalid/json/list";
 
-        assertThatThrownBy(() -> RequestHandler.get(url)).isInstanceOf(RuntimeException.class);
+        assertThatThrownBy(() -> RequestHandler.get(url, console)).isInstanceOf(RuntimeException.class);
 
         assertThat(console.anyErrorContains("Failed to connect to the phone")).isTrue();
     }
