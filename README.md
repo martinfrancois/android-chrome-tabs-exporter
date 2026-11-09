@@ -20,7 +20,9 @@ A small JavaFX desktop app with one button. When you click "Export Android Tabs"
    URL are both blank, and collapses entries with the same URL into one row. The first
    title seen for a URL is the one written.
 6. Writes `<yyyy-MM-dd> Android Tabs.xlsx` into the directory you chose, rows sorted by
-   URL, and opens that directory in your file manager.
+   URL, and opens that directory in your file manager. If that file already exists, for
+   example from another phone, it writes `<yyyy-MM-dd> Android Tabs (2).xlsx` and so on
+   instead, and the console line names the file it wrote.
 7. Deletes the `adb` binary it extracted.
 
 ## Requirements
