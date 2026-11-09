@@ -1,0 +1,27 @@
+# Packs the Linux app image that `./gradlew jpackage` builds, Java runtime included, for Arch Linux.
+# The installers workflow builds it with makepkg after placing android-chrome-tabs-exporter-app-image.tar.gz
+# next to this file and setting PKGVER.
+pkgname=android-chrome-tabs-exporter
+pkgver=${PKGVER:-1.0.0}
+pkgrel=1
+pkgdesc="Exports every open tab of Chrome on an Android phone into an Excel file"
+arch=('x86_64')
+url="https://github.com/martinfrancois/android-chrome-tabs-exporter"
+license=('MIT')
+depends=('gtk3' 'libxtst' 'libxi' 'libxrender' 'freetype2')
+# The bundled Java runtime ships its own stripped libraries; stripping them again can break it.
+options=('!strip' '!debug')
+source=("android-chrome-tabs-exporter-app-image.tar.gz"
+        "android-chrome-tabs-exporter.desktop")
+sha256sums=('SKIP'
+            'SKIP')
+
+package() {
+    install -d "$pkgdir/opt"
+    cp -a "$srcdir/android-chrome-tabs-exporter" "$pkgdir/opt/"
+    install -d "$pkgdir/usr/bin"
+    ln -s /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter "$pkgdir/usr/bin/android-chrome-tabs-exporter"
+    install -Dm644 "$srcdir/android-chrome-tabs-exporter.desktop" "$pkgdir/usr/share/applications/android-chrome-tabs-exporter.desktop"
+    install -Dm644 "$srcdir/android-chrome-tabs-exporter/lib/android-chrome-tabs-exporter.png" "$pkgdir/usr/share/pixmaps/android-chrome-tabs-exporter.png"
+    install -Dm644 "$srcdir/android-chrome-tabs-exporter/lib/app/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

@@ -12,7 +12,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The run number only grows, so every release's installers carry a higher version than the last.
+  installers:
+    uses: ./.github/workflows/installers.yml
+    with:
+      version: "1.0.${{ github.run_number }}"
+
   release:
+    needs: installers
     runs-on: ubuntu-26.04
     timeout-minutes: 20
     permissions:
@@ -42,6 +49,12 @@ jobs:
           sudo apt-get install -y --no-install-recommends xvfb xauth x11-utils libgtk-3-0 at-spi2-core dbus-daemon
           dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py build/distributions/android-chrome-tabs-exporter-linux.zip
 
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: installers-*
+          path: installers
+          merge-multiple: true
+
       - id: date
         run: echo "date=$(date --utc +%Y-%m-%dT%H-%M-%SZ)" >> "$GITHUB_OUTPUT"
 
@@ -49,6 +62,12 @@ jobs:
         with:
           tag_name: ${{ steps.date.outputs.date }}
           name: Release ${{ steps.date.outputs.date }}
-          files: ./build/distributions/android-chrome-tabs-exporter-linux.zip
+          files: |
+            ./build/distributions/android-chrome-tabs-exporter-linux.zip
+            ./installers/*.deb
+            ./installers/*.rpm
+            ./installers/*.pkg.tar.zst
+            ./installers/*.msi
+            ./installers/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

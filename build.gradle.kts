@@ -178,13 +178,18 @@ val javafxRuntime = configurations.runtimeClasspath.get().incoming.artifactView 
     }
 }.files
 
+// The files every packaging ships next to JavaFX: the application JAR and the notices.
+val applicationFiles = copySpec {
+    from(tasks.shadowJar) { into("lib") }
+    from("LICENSE", "NOTICE.md")
+    from("licenses") { into("licenses") }
+}
+
 distributions {
     main {
         contents {
-            from(tasks.shadowJar) { into("lib") }
+            with(applicationFiles)
             from(javafxRuntime) { into("modules") }
-            from("LICENSE", "NOTICE.md")
-            from("licenses") { into("licenses") }
             filesMatching("bin/*") { permissions { unix("0755") } }
         }
     }
@@ -192,4 +197,102 @@ distributions {
 
 tasks.distZip {
     archiveFileName.set("android-chrome-tabs-exporter-linux.zip")
+}
+
+// Native installers. jpackage from the Java 21 toolchain bundles a Java runtime into each one, so
+// users need no Java installation. -PinstallerType picks the format the build host can make:
+// app-image, deb or rpm on Linux, msi on Windows, dmg on macOS. -PinstallerVersion sets the
+// version the installer records; Windows only upgrades over an installed copy with a lower one.
+val installerType = providers.gradleProperty("installerType").orElse("app-image")
+val installerVersion = providers.gradleProperty("installerVersion").orElse("1.0.0")
+val hostOs = System.getProperty("os.name").lowercase()
+val hostIsWindows = hostOs.startsWith("windows")
+val hostIsMac = hostOs.startsWith("mac")
+val hostIsLinux = hostOs.startsWith("linux")
+val jpackageExecutable = javaToolchains.launcherFor(java.toolchain).map { launcher ->
+    val name = if (hostIsWindows) "jpackage.exe" else "jpackage"
+    launcher.metadata.installationPath.file("bin/$name").asFile.absolutePath
+}
+val jpackageInputDirectory = layout.buildDirectory.dir("jpackage/input")
+val jpackageModulesDirectory = layout.buildDirectory.dir("jpackage/modules/modules")
+
+// jpackage puts every JAR under --input on the class path, so JavaFX goes in through --app-content
+// and reaches the application only as named modules, like in the ZIP.
+val jpackageInput = tasks.register<Sync>("jpackageInput") {
+    into(jpackageInputDirectory)
+    with(applicationFiles)
+}
+
+val jpackageModules = tasks.register<Sync>("jpackageModules") {
+    into(jpackageModulesDirectory)
+    from(javafxRuntime)
+}
+
+tasks.register<Exec>("jpackage") {
+    description = "Builds a native installer with a bundled Java runtime. -PinstallerType=app-image|deb|rpm|msi|dmg"
+    group = "distribution"
+    dependsOn(jpackageInput, jpackageModules)
+    val input = jpackageInputDirectory
+    val modules = jpackageModulesDirectory
+    // One directory per type, so building a deb and then an rpm keeps both.
+    val output = installerType.flatMap { layout.buildDirectory.dir("jpackage/$it") }
+    inputs.dir(input)
+    inputs.dir(modules)
+    inputs.property("installerType", installerType)
+    inputs.property("installerVersion", installerVersion)
+    outputs.dir(output)
+    doFirst {
+        // jpackage refuses to write an app image into a directory that already holds one.
+        output.get().asFile.deleteRecursively()
+        executable(jpackageExecutable.get())
+    }
+    argumentProviders.add(CommandLineArgumentProvider {
+        // Linux package and directory names stay lowercase; Windows and macOS show the name to users.
+        val name = if (hostIsLinux) "android-chrome-tabs-exporter" else "Android Chrome Tabs Exporter"
+        val arguments = mutableListOf(
+            "--type", installerType.get(),
+            "--name", name,
+            "--app-version", installerVersion.get(),
+            "--vendor", "François Martin",
+            "--description", "Exports every open tab of Chrome on an Android phone into an Excel file",
+            "--copyright", "Copyright François Martin",
+            "--input", input.get().asFile.absolutePath,
+            "--app-content", modules.get().asFile.absolutePath,
+            "--main-jar", "lib/android-chrome-tabs-exporter.jar",
+            "--main-class", "com.github.martinfrancois.Launcher",
+            // The same module setup as the ZIP's launcher: JavaFX from the shipped modules directory.
+            "--java-options", "--module-path=\$APPDIR/../modules",
+            "--java-options", "--add-modules=javafx.controls",
+            "--dest", output.get().asFile.absolutePath,
+        )
+        // Installer options are rejected for an app image, which is only the application directory.
+        if (installerType.get() != "app-image") {
+            when {
+                // The Linux packages install the license as their copyright file. The .msi and .dmg
+                // get none: there it becomes a license agreement to accept, which MIT does not need.
+                hostIsLinux -> arguments += listOf(
+                    "--license-file", file("LICENSE").absolutePath,
+                    "--linux-shortcut",
+                    "--linux-menu-group", "Utility",
+                    "--linux-deb-maintainer", "f.martin@fastmail.com",
+                    "--linux-rpm-license-type", "MIT",
+                    // JavaFX loads GTK and libXtst from native libraries it unpacks at startup, so
+                    // the package tools cannot find these dependencies by scanning the package.
+                    "--linux-package-deps",
+                    if (installerType.get() == "rpm") "gtk3, libXtst" else "libgtk-3-0t64, libxtst6",
+                )
+                hostIsWindows -> arguments += listOf(
+                    "--win-menu",
+                    "--win-shortcut",
+                    "--win-dir-chooser",
+                    // A fixed upgrade code makes a newer installer replace an installed older version.
+                    "--win-upgrade-uuid", "6f0c9f5e-2c8e-4a43-9a8d-6c3b1f7a2e41",
+                )
+            }
+        }
+        if (hostIsMac) {
+            arguments += listOf("--mac-package-identifier", "com.github.martinfrancois.android-chrome-tabs-exporter")
+        }
+        arguments
+    })
 }
