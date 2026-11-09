@@ -156,7 +156,7 @@ jobs:
           if-no-files-found: error
 
   windows:
-    # windows-2022 ships WiX Toolset 3, which jpackage from Java 21 needs for the .msi.
+    # The image must ship WiX Toolset 3, which jpackage from Java 21 needs for the .msi.
     runs-on: windows-2025
     timeout-minutes: 30
     defaults:
