@@ -16,27 +16,31 @@ if [ -e "$app" ]; then
     echo "cannot install application \"$app\": it already exists" >&2
     exit 1
 fi
-mount_point=$(mktemp -d)
-hdiutil attach -nobrowse -readonly -mountpoint "$mount_point" "$1" >/dev/null
-if [ ! -d "$mount_point/$app_name" ]; then
-    hdiutil detach "$mount_point" >/dev/null
-    echo "cannot find application \"$app_name\": expected the application bundle in the disk image" >&2
-    exit 1
-fi
-ditto "$mount_point/$app_name" "$app"
-hdiutil detach "$mount_point" >/dev/null
-
 log=$(mktemp)
 pid=""
+mount_point=""
 cleanup() {
     if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
         kill "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
     fi
     cat "$log"
+    if [ -n "$mount_point" ]; then
+        hdiutil detach "$mount_point" >/dev/null || true
+    fi
     rm -rf "${app:?}"
 }
 trap cleanup EXIT
+
+mount_point=$(mktemp -d)
+hdiutil attach -nobrowse -readonly -mountpoint "$mount_point" "$1" >/dev/null
+if [ ! -d "$mount_point/$app_name" ]; then
+    echo "cannot find application \"$app_name\": expected the application bundle in the disk image" >&2
+    exit 1
+fi
+ditto "$mount_point/$app_name" "$app"
+hdiutil detach "$mount_point" >/dev/null
+mount_point=""
 
 launcher="$app/Contents/MacOS/Android Chrome Tabs Exporter"
 
