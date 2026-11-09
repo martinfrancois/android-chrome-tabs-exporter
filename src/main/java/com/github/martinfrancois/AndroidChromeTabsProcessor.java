@@ -15,13 +15,13 @@ public class AndroidChromeTabsProcessor {
         throw new UnsupportedOperationException("AndroidChromeTabsProcessor is a utility class and should not be instantiated.");
     }
 
-    public static TreeSet<Tab> toTreeSet(String tabsJson) {
+    public static TreeSet<Tab> toTreeSet(String tabsJson, ExportConsole console) {
         // Using TreeSet to automatically sort and deduplicate entries based on URL
         TreeSet<Tab> tabs = new TreeSet<>(Comparator.comparing(Tab::url));
 
         if (tabsJson != null && !tabsJson.isEmpty()) {
             JSONArray tabsArray = new JSONArray(tabsJson);
-            Main.updateProgress.accept("Found " + tabsArray.length() + " tabs.");
+            console.progress("Found " + tabsArray.length() + " tabs.");
 
             for (int i = 0; i < tabsArray.length(); i++) {
                 JSONObject tab = tabsArray.getJSONObject(i);

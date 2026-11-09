@@ -13,9 +13,10 @@ public class RequestHandler {
     /**
      * Sends a GET request to the specified URL and returns the response body as a {@link String}.
      * @param url to send the GET request to
+     * @param console receives the failure messages
      * @return response body as a {@link String}
      */
-    public static String get(String url) {
+    public static String get(String url, ExportConsole console) {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(java.net.URI.create(url))
                 .GET()
@@ -26,10 +27,10 @@ public class RequestHandler {
             if (response.statusCode() == 200) {
                 return response.body();
             } else {
-                Main.updateError.accept("HTTP Request failed with status code: " + response.statusCode());
+                console.error("HTTP Request failed with status code: " + response.statusCode());
             }
         } catch (Exception e) {
-            Main.updateError.accept("Failed to connect to the phone. " + AdbHandler.CONNECTION_CHECKLIST + " You can also try reconnecting your phone if none of this helps.");
+            console.error("Failed to connect to the phone. " + AdbHandler.CONNECTION_CHECKLIST + " You can also try reconnecting your phone if none of this helps.");
             throw new RuntimeException(e);
         }
         return null;

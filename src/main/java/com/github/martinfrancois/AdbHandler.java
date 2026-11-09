@@ -28,11 +28,13 @@ public class AdbHandler implements AutoCloseable {
     static final String CONNECTION_CHECKLIST = "Make sure your phone is plugged in and unlocked, USB debugging is enabled, you allowed USB debugging and the Chrome app is open.";
 
     private static final String PLATFORM_TOOLS_PREFIX = "https://dl.google.com/android/repository/platform-tools-latest-";
+    private final ExportConsole console;
     private final File adbExecutable;
     private Process process;
     private boolean retry = false;
 
-    public AdbHandler() {
+    public AdbHandler(ExportConsole console) {
+        this.console = console;
         adbExecutable = downloadAdbExecutable();
         validateAdbExecutable();
     }
@@ -87,7 +89,7 @@ public class AdbHandler implements AutoCloseable {
 
     private void validateAdbExecutable() {
         if (adbExecutable == null || !adbExecutable.exists()) {
-            Main.updateError.accept("Failed to download ADB executable.");
+            console.error("Failed to download ADB executable.");
         }
     }
 
@@ -116,18 +118,18 @@ public class AdbHandler implements AutoCloseable {
                 int exitCode = process.waitFor();
 
                 if (error.contains("no devices/emulators found")) {
-                    Main.updateError.accept("No android device found. " + CONNECTION_CHECKLIST + " If it is still not found, unplug the cable and plug it in again, or try another USB port or another USB cable. Retrying in 3 seconds...");
+                    console.error("No android device found. " + CONNECTION_CHECKLIST + " If it is still not found, unplug the cable and plug it in again, or try another USB port or another USB cable. Retrying in 3 seconds...");
                     retry();
                 } else if (error.contains("cannot bind listener: Address already in use")) {
                     String nextPort = String.valueOf(Integer.parseInt(adbPort) + 1);
-                    Main.updateProgress.accept("Port " + adbPort + " is already in use, trying port " + nextPort + "...");
+                    console.progress("Port " + adbPort + " is already in use, trying port " + nextPort + "...");
                     adbPort = nextPort;
                     retry(0);
                 } else if (error.contains("device unauthorized")) {
-                    Main.updateError.accept("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
+                    console.error("Please accept the USB debugging prompt on your phone to continue. Retrying in 3 seconds...");
                     retry();
                 } else if (!((adbPort.equals(output.trim()) || output.isBlank()) && exitCode == 0) && !error.isBlank()) {
-                    Main.updateError.accept("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
+                    console.error("adb command did not behave as expected, resulted in:\n" + "Output: " + output + "\nError: " + error + "\nExit code: " + exitCode);
                 }
             } catch (IOException | InterruptedException e) {
                 throw new RuntimeException(e);
@@ -163,16 +165,16 @@ public class AdbHandler implements AutoCloseable {
         var os = systemInfo.getOperatingSystem();
         for (OSProcess process : os.getProcesses()) {
             if (getAdbExecutableName().equals(process.getName())) {
-                Main.updateProgress.accept("Found running adb process, terminating the process...");
+                console.progress("Found running adb process, terminating the process...");
                 ProcessHandle.of(process.getProcessID()).ifPresent(procHandle -> {
                     procHandle.destroy();
                     try {
                         procHandle.onExit().get(30, TimeUnit.SECONDS);
-                        Main.updateProgress.accept("Running adb process was successfully terminated");
+                        console.progress("Running adb process was successfully terminated");
                     } catch (InterruptedException | ExecutionException e) {
-                        Main.updateError.accept("Unexpected error when attempting to terminate adb: " + Throwables.getStackTraceAsString(e));
+                        console.error("Unexpected error when attempting to terminate adb: " + Throwables.getStackTraceAsString(e));
                     } catch (TimeoutException e) {
-                        Main.updateError.accept("Failed to terminate adb process within 30 seconds.");
+                        console.error("Failed to terminate adb process within 30 seconds.");
                     }
                 });
                 return;
@@ -194,7 +196,7 @@ public class AdbHandler implements AutoCloseable {
 
     private void deleteAdbExecutable() {
         if (adbExecutable == null || !adbExecutable.delete()) {
-            Main.updateError.accept("Failed to delete ADB executable.");
+            console.error("Failed to delete ADB executable.");
         }
     }
 }

@@ -6,8 +6,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -34,22 +32,12 @@ class ExampleExportTest {
     private static final Path EXAMPLE_INPUT = Path.of("examples", "tabs.json");
     private static final Path EXAMPLE_OUTPUT = Path.of("build", "examples", "tabs.xlsx");
 
-    private CapturedConsole console;
-
-    @BeforeEach
-    void setUp() {
-        console = new CapturedConsole();
-    }
-
-    @AfterEach
-    void tearDown() {
-        console.close();
-    }
+    private final CapturedConsole console = new CapturedConsole();
 
     @Test
     void exportsTheExamplePayloadToAWorkbookWithTitleAndUrlColumns() throws Exception {
         String json = Files.readString(EXAMPLE_INPUT, StandardCharsets.UTF_8);
-        TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(json);
+        TreeSet<Tab> tabs = AndroidChromeTabsProcessor.toTreeSet(json, console);
 
         Files.createDirectories(EXAMPLE_OUTPUT.getParent());
         try (OutputStream out = Files.newOutputStream(EXAMPLE_OUTPUT)) {

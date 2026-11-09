@@ -5,8 +5,6 @@ import com.github.martinfrancois.testsupport.CapturedConsole;
 import com.github.martinfrancois.testsupport.UtilityClasses;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -27,21 +25,11 @@ import static org.springframework.web.util.HtmlUtils.htmlEscape;
  */
 class AndroidChromeTabsProcessorDependencyTest {
 
-    private CapturedConsole console;
+    private final CapturedConsole console = new CapturedConsole();
 
-    @BeforeEach
-    void setUp() {
-        console = new CapturedConsole();
-    }
-
-    @AfterEach
-    void tearDown() {
-        console.close();
-    }
-
-    private static Tab onlyTabFor(String title, String url) {
+    private Tab onlyTabFor(String title, String url) {
         String json = new JSONArray().put(new JSONObject().put("title", title).put("url", url)).toString();
-        TreeSet<Tab> tabs = toTreeSet(json);
+        TreeSet<Tab> tabs = toTreeSet(json, console);
         assertThat(tabs).hasSize(1);
         return tabs.first();
     }
@@ -116,7 +104,7 @@ class AndroidChromeTabsProcessorDependencyTest {
                 .put(new JSONObject().put("title", "GitHub").put("url", "https://github.com"))
                 .toString();
 
-        TreeSet<Tab> tabs = toTreeSet(json);
+        TreeSet<Tab> tabs = toTreeSet(json, console);
 
         assertThat(tabs).hasSize(2);
         assertThat(console.progress()).containsExactly("Found 3 tabs.");
@@ -124,7 +112,7 @@ class AndroidChromeTabsProcessorDependencyTest {
 
     @Test
     void emptyStringInputIsTreatedAsNoTabsAndReportsNothing() {
-        assertThat(toTreeSet("")).isEmpty();
+        assertThat(toTreeSet("", console)).isEmpty();
         assertThat(console.progress()).isEmpty();
     }
 
@@ -139,7 +127,7 @@ class AndroidChromeTabsProcessorDependencyTest {
                 .put(new JSONObject())
                 .toString();
 
-        TreeSet<Tab> tabs = toTreeSet(json);
+        TreeSet<Tab> tabs = toTreeSet(json, console);
 
         assertThat(tabs).containsExactly(
                 new Tab("Titled but no url", ""),
@@ -169,7 +157,7 @@ class AndroidChromeTabsProcessorDependencyTest {
                 } ]
                 """;
 
-        TreeSet<Tab> tabs = toTreeSet(json);
+        TreeSet<Tab> tabs = toTreeSet(json, console);
 
         assertThat(tabs).containsExactly(
                 new Tab("GitHub · Build software", "https://github.com/"),
