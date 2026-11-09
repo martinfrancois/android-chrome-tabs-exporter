@@ -280,7 +280,7 @@ tasks.register<Exec>("jpackage") {
                     // JavaFX loads GTK and libXtst from native libraries it unpacks at startup, so
                     // the package tools cannot find these dependencies by scanning the package.
                     "--linux-package-deps",
-                    if (installerType.get() == "rpm") "gtk3, libXtst" else "libgtk-3-0t64 | libgtk-3-0, libxtst6",
+                    if (installerType.get() == "rpm") "gtk3, libXtst" else "libgtk-3-0t64, libxtst6",
                 )
                 hostIsWindows -> arguments += listOf(
                     "--win-menu",

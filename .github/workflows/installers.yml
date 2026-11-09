@@ -2,7 +2,7 @@ name: installers
 
 # Builds the native installers with jpackage on each operating system, installs each one on a
 # clean runner or container, and checks that the installed application opens its window.
-# ci.yml runs it for every change; release.yml runs it and attaches the files to the release.
+# ci.yml runs it for every pull request; release.yml runs it and attaches the files to the release.
 
 on:
   workflow_call:
@@ -36,10 +36,10 @@ jobs:
           build-scan-terms-of-use-agree: "yes"
 
       # jpackage calls dpkg-deb under fakeroot for the .deb and rpmbuild for the .rpm.
-      - name: Install the packaging tools and the display for the launch check
+      - name: Install the packaging tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends fakeroot rpm xvfb xauth x11-utils at-spi2-core dbus-daemon
+          sudo apt-get install -y --no-install-recommends fakeroot rpm
 
       - name: Build the app image, the .deb and the .rpm
         env:
@@ -53,19 +53,40 @@ jobs:
           cp build/jpackage/rpm/*.rpm installers/android-chrome-tabs-exporter-linux-x86_64.rpm
           tar -C build/jpackage/app-image -czf installers/android-chrome-tabs-exporter-app-image.tar.gz android-chrome-tabs-exporter
 
-      # The packages register their menu entry with xdg-desktop-menu, which fails unless the menu
-      # directories that every desktop environment provides exist; a runner or container lacks them.
-      - name: Install the .deb and open the application
-        run: |
-          sudo mkdir -p /etc/xdg/menus /usr/share/applications /usr/share/desktop-directories
-          sudo apt-get install -y ./installers/android-chrome-tabs-exporter-linux-amd64.deb
-          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
-
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: installers-linux
           path: installers/
           if-no-files-found: error
+
+  # A plain container, unlike the runner, has no GTK, so the check also proves that the package
+  # declares the libraries JavaFX loads.
+  deb:
+    needs: linux
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    container: docker.io/library/ubuntu:26.04@sha256:6a06111c3b0a8600feadb270aec771dc239bf407b25625f93f44ab00e11f4d3c
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: installers-linux
+          path: installers
+
+      # The packages register their menu entry with xdg-desktop-menu, which fails unless the menu
+      # directories that every desktop environment provides exist; a container lacks them.
+      - name: Install the .deb and open the application
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3 xvfb xauth x11-utils at-spi2-core dbus-daemon xdg-utils
+          mkdir -p /etc/xdg/menus /usr/share/applications /usr/share/desktop-directories
+          apt-get install -y ./installers/android-chrome-tabs-exporter-linux-amd64.deb
+          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
 
   rpm:
     needs: linux
@@ -82,6 +103,7 @@ jobs:
           name: installers-linux
           path: installers
 
+      # See the .deb job for the menu directories.
       - name: Install the .rpm and open the application
         run: |
           dnf install -y python3 xorg-x11-server-Xvfb xorg-x11-xauth xwininfo at-spi2-core dbus-daemon xdg-utils
@@ -205,7 +227,7 @@ jobs:
           mkdir -p installers
           cp build/jpackage/dmg/*.dmg "installers/android-chrome-tabs-exporter-macos-$ARCHITECTURE.dmg"
 
-      - name: Mount the .dmg and open the application
+      - name: Install the .dmg and open the application
         env:
           ARCHITECTURE: ${{ matrix.architecture }}
         run: scripts/smoke_macos.sh "installers/android-chrome-tabs-exporter-macos-$ARCHITECTURE.dmg"
