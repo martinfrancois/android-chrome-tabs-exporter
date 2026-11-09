@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Android Chrome Tabs Exporter
+Comment=Exports every open tab of Chrome on an Android phone into an Excel file
+Exec=/opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
+Icon=android-chrome-tabs-exporter
+Categories=Utility;
+Terminal=false

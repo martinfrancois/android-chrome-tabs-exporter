@@ -18,3 +18,13 @@ is the variable font "Material Symbols Outlined", version 2.719, copyright
 `gradle/wrapper/gradle-wrapper.jar` is the Gradle wrapper, copyright the
 original authors, licensed under the Apache License 2.0 (text in
 `licenses/Apache-2.0.txt`). Source: https://github.com/gradle/gradle
+
+## Java runtime in the installers
+
+The installers on the releases page (`.deb`, `.rpm`, Arch package, `.msi`, `.dmg`)
+bundle a Java runtime that jpackage builds with jlink from Eclipse Temurin 21, the
+JDK the build uses. It is OpenJDK, licensed under the GNU General Public License,
+version 2, with the Classpath Exception. Its license texts and notices ship with it,
+in the `legal` directory of the bundled runtime.
+
+- Source: https://github.com/adoptium/temurin21-binaries

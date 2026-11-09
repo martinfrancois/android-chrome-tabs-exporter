@@ -1,0 +1,213 @@
+name: installers
+
+# Builds the native installers with jpackage on each operating system, installs each one on a
+# clean runner or container, and checks that the installed application opens its window.
+# ci.yml runs it for every change; release.yml runs it and attaches the files to the release.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version the installers record. Windows upgrades an installed copy only to a higher one."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21.0.13+9.0.LTS"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
+
+      # jpackage calls dpkg-deb under fakeroot for the .deb and rpmbuild for the .rpm.
+      - name: Install the packaging tools and the display for the launch check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fakeroot rpm xvfb xauth x11-utils libgtk-3-0 at-spi2-core dbus-daemon
+
+      - name: Build the app image, the .deb and the .rpm
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          for type in app-image deb rpm; do
+            ./gradlew --no-daemon jpackage -PinstallerType="$type" -PinstallerVersion="$VERSION"
+          done
+          mkdir -p installers
+          cp build/jpackage/deb/*.deb installers/android-chrome-tabs-exporter-linux-amd64.deb
+          cp build/jpackage/rpm/*.rpm installers/android-chrome-tabs-exporter-linux-x86_64.rpm
+          tar -C build/jpackage/app-image -czf installers/android-chrome-tabs-exporter-app-image.tar.gz android-chrome-tabs-exporter
+
+      - name: Install the .deb and open the application
+        run: |
+          sudo apt-get install -y ./installers/android-chrome-tabs-exporter-linux-amd64.deb
+          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installers-linux
+          path: installers/
+          if-no-files-found: error
+
+  rpm:
+    needs: linux
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    container: docker.io/library/fedora:43@sha256:f01112b9a1f1d0504ad962d9adfa401425033f8ab067e0a821904ebdde5b8ca5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: installers-linux
+          path: installers
+
+      - name: Install the .rpm and open the application
+        run: |
+          dnf install -y python3 xorg-x11-server-Xvfb xorg-x11-xauth xwininfo at-spi2-core dbus-daemon
+          dnf install -y ./installers/android-chrome-tabs-exporter-linux-x86_64.rpm
+          dbus-run-session -- xvfb-run -a python3 scripts/smoke_distribution.py --launcher /opt/android-chrome-tabs-exporter/bin/android-chrome-tabs-exporter
+
+  arch:
+    needs: linux
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    container: docker.io/library/archlinux:base-devel@sha256:2de80105abb49f813a85393c6758a4334deb6bcec4a2411bd2f059c0bee6ee4c
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: installers-linux
+          path: installers
+
+      # makepkg refuses to run as root, which is the container's user.
+      - name: Build the Arch package from the app image
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          useradd --create-home builder
+          install -d -o builder /home/builder/package
+          cp packaging/arch/PKGBUILD packaging/arch/android-chrome-tabs-exporter.desktop installers/android-chrome-tabs-exporter-app-image.tar.gz /home/builder/package/
+          chown -R builder /home/builder/package
+          su builder -c "cd /home/builder/package && PKGVER='$VERSION' makepkg --nodeps"
+          mkdir -p arch
+          cp /home/builder/package/android-chrome-tabs-exporter-"$VERSION"-1-x86_64.pkg.tar.zst arch/android-chrome-tabs-exporter-arch-x86_64.pkg.tar.zst
+
+      - name: Install the package and open the application
+        run: |
+          pacman -Syu --noconfirm --needed python xorg-server-xvfb xorg-xauth xorg-xwininfo at-spi2-core dbus
+          pacman -U --noconfirm arch/android-chrome-tabs-exporter-arch-x86_64.pkg.tar.zst
+          dbus-run-session -- xvfb-run -a python scripts/smoke_distribution.py --launcher /usr/bin/android-chrome-tabs-exporter
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installers-arch
+          path: arch/
+          if-no-files-found: error
+
+  windows:
+    # windows-2022 ships WiX Toolset 3, which jpackage from Java 21 needs for the .msi.
+    runs-on: windows-2022
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21.0.13+9.0.LTS"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
+
+      - name: Build the .msi
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          ./gradlew --no-daemon jpackage -PinstallerType=msi -PinstallerVersion="$VERSION"
+          mkdir -p installers
+          cp build/jpackage/msi/*.msi installers/android-chrome-tabs-exporter-windows-x64.msi
+
+      - name: Install the .msi and open the application
+        shell: pwsh
+        run: ./scripts/smoke_windows.ps1 -Installer installers/android-chrome-tabs-exporter-windows-x64.msi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installers-windows
+          path: installers/
+          if-no-files-found: error
+
+  macos:
+    strategy:
+      matrix:
+        include:
+          - runner: macos-15
+            architecture: arm64
+          - runner: macos-15-intel
+            architecture: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21.0.13+9.0.LTS"
+
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+        with:
+          build-scan-publish: true
+          build-scan-terms-of-use-url: https://gradle.com/terms-of-service
+          build-scan-terms-of-use-agree: "yes"
+
+      - name: Build the .dmg
+        env:
+          VERSION: ${{ inputs.version }}
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          ./gradlew --no-daemon jpackage -PinstallerType=dmg -PinstallerVersion="$VERSION"
+          mkdir -p installers
+          cp build/jpackage/dmg/*.dmg "installers/android-chrome-tabs-exporter-macos-$ARCHITECTURE.dmg"
+
+      - name: Mount the .dmg and open the application
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+        run: scripts/smoke_macos.sh "installers/android-chrome-tabs-exporter-macos-$ARCHITECTURE.dmg"
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: installers-macos-${{ matrix.architecture }}
+          path: installers/
+          if-no-files-found: error

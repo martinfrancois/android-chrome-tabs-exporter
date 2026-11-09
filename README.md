@@ -27,14 +27,51 @@ A small JavaFX desktop app with one button. When you click "Export Android Tabs"
 
 ## Requirements
 
-- Java 21 or newer.
 - Network access on every run, for the `platform-tools` download.
 - An Android phone with Chrome, a USB cable, and USB debugging enabled on the phone.
+- Java 21 or newer, only for the ZIP archive and source builds. The installers bring
+  their own Java runtime.
 
 The build and the tests run on Linux in CI. The download step has separate code paths for
 Windows and macOS, but no automated check covers them.
 
 ## Install
+
+Every release on the releases page has an installer for each platform. Each one bundles a
+Java runtime, so no Java installation is needed:
+
+| Platform | File |
+| --- | --- |
+| Windows (x64) | `android-chrome-tabs-exporter-windows-x64.msi` |
+| macOS on Apple silicon | `android-chrome-tabs-exporter-macos-arm64.dmg` |
+| macOS on Intel | `android-chrome-tabs-exporter-macos-x64.dmg` |
+| Debian, Ubuntu (amd64) | `android-chrome-tabs-exporter-linux-amd64.deb` |
+| Fedora, RHEL (x86_64) | `android-chrome-tabs-exporter-linux-x86_64.rpm` |
+| Arch Linux (x86_64) | `android-chrome-tabs-exporter-arch-x86_64.pkg.tar.zst` |
+
+CI installs each one on a fresh runner or container and checks that the application
+window opens.
+
+The installers are not signed. Windows SmartScreen warns about an unknown publisher; click
+"More info", then "Run anyway". macOS refuses to open the app the first time; open System
+Settings, then Privacy & Security, and click "Open Anyway". On Linux, install the file
+with the package manager, for example `sudo apt install ./android-chrome-tabs-exporter-linux-amd64.deb`,
+`sudo dnf install ./android-chrome-tabs-exporter-linux-x86_64.rpm` or
+`sudo pacman -U android-chrome-tabs-exporter-arch-x86_64.pkg.tar.zst`. The Linux packages
+install into `/opt/android-chrome-tabs-exporter` and add a menu entry.
+
+To build an installer for the system you are on:
+
+```bash
+./gradlew jpackage -PinstallerType=deb   # or rpm, msi, dmg, app-image
+```
+
+It lands in `build/jpackage/<type>/`. The `.deb` needs `dpkg-deb` and `fakeroot`, the
+`.rpm` needs `rpmbuild`, and the `.msi` needs WiX Toolset 3. The Arch package is built
+from the app image with `packaging/arch/PKGBUILD`, as `.github/workflows/installers.yml`
+shows.
+
+### ZIP archive
 
 Either download `android-chrome-tabs-exporter-linux.zip` from the latest entry on the
 releases page, or build it:
