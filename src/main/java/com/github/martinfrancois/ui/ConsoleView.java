@@ -1,6 +1,8 @@
 package com.github.martinfrancois.ui;
 
 import com.github.martinfrancois.ui.model.ConsoleLine;
+import javafx.application.Platform;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.scene.control.ContextMenu;
@@ -35,6 +37,30 @@ public class ConsoleView extends ListView<ConsoleLine> {
         copy.setOnAction(event -> copySelection());
         setContextMenu(new ContextMenu(copy));
         addEventHandler(KeyEvent.KEY_PRESSED, this::copyOnShortcut);
+        getItems().addListener(this::showNewestLine);
+    }
+
+    /**
+     * Scrolls to the newest line whenever lines are added, like a terminal. The scroll runs after
+     * this change notification ends: this listener is registered before the skin's, so during the
+     * notification the skin still counts the old lines and a scroll stops at the old last line.
+     */
+    private void showNewestLine(ListChangeListener.Change<? extends ConsoleLine> change) {
+        while (change.next()) {
+            if (change.wasAdded()) {
+                Platform.runLater(this::scrollToNewestLine);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Scrolls to the end of the list. An index past the last line makes the list jump to its end,
+     * while the last line's own index places that line at the top, which the list estimates from
+     * row heights it hasn't measured yet and can leave the line just below the visible area.
+     */
+    private void scrollToNewestLine() {
+        scrollTo(getItems().size());
     }
 
     private void copyOnShortcut(KeyEvent event) {

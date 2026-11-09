@@ -7,6 +7,7 @@ import com.github.martinfrancois.ui.model.Theme;
 import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
 import javafx.event.Event;
+import javafx.geometry.HPos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -176,6 +177,7 @@ class MainUiTest {
         assertThat(find(Label.class, 0).getText()).isEqualTo("Export directory:");
         assertThat(buttonWithText("Choose Directory")).isNotNull();
         assertThat(buttonWithText("Export Android Tabs")).isNotNull();
+        assertThat(buttonWithText("Clear Console")).isNotNull();
         assertThat(console().getContextMenu().getItems()).extracting(MenuItem::getText).containsExactly("Copy");
         assertThat(directoryField().isEditable()).isFalse();
     }
@@ -315,6 +317,19 @@ class MainUiTest {
 
             assertThat(Clipboard.getSystemClipboard().getString()).isEqualTo("earlier");
         });
+    }
+
+    @Test
+    void clearConsoleEmptiesTheConsoleAndIsDisabledWhileItIsEmpty() {
+        Button clear = buttonWithText("Clear Console");
+        assertThat(GridPane.getRowIndex(clear)).as("right below the console").isEqualTo(GridPane.getRowIndex(console()) + 1);
+        assertThat(GridPane.getHalignment(clear)).isEqualTo(HPos.RIGHT);
+        assertThat(clear.isDisabled()).as("the console starts with the chosen directory").isFalse();
+
+        JavaFxToolkit.runAndWait(clear::fire);
+
+        assertThat(console().getItems()).isEmpty();
+        assertThat(clear.isDisabled()).isTrue();
     }
 
     @Test
