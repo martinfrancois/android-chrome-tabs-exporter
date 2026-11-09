@@ -3,12 +3,24 @@
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import time
 import zipfile
+
+
+# Workaround: during the JVM's shutdown after SIGTERM, JavaFX can still submit a paint job to its
+# stopped renderer and log this trace (JDK-8094660). It says nothing about the packaged app, so
+# it is ignored, and only in the part of the log written after SIGTERM. Remove it once a JavaFX
+# upgrade no longer logs the trace; issue #192 has the check.
+SHUTDOWN_PAINT_RACE = re.compile(
+    r"^java\.util\.concurrent\.RejectedExecutionException: Task com\.sun\.javafx\.tk\.quantum\.PaintRenderJob@\S+ .*"
+    r"rejected from com\.sun\.javafx\.tk\.quantum\.QuantumRenderer@\S+\[Terminated,.*\n(?:\tat .*\n)*",
+    re.MULTILINE,
+)
 
 
 def main():
@@ -65,11 +77,17 @@ def main():
                     time.sleep(0.1)
                 else:
                     raise AssertionError('cannot find window "Android Chrome Tabs Exporter": inspect the startup log')
+                startup_size = log_path.stat().st_size
                 process.terminate()
                 process.wait(timeout=10)
                 if process.returncode not in (0, -15, 143):
                     raise AssertionError(f'cannot confirm shutdown "exit {process.returncode}": expected normal exit or SIGTERM')
-                text = log_path.read_text()
+                written = log_path.read_bytes()
+                startup = written[:startup_size].decode(errors="replace")
+                shutdown = written[startup_size:].decode(errors="replace")
+                text = startup + SHUTDOWN_PAINT_RACE.sub("", shutdown)
+                if SHUTDOWN_PAINT_RACE.search(shutdown):
+                    print("NOTE: ignored the JavaFX shutdown paint race (JDK-8094660, issue #192) in the log below")
                 if "Unsupported JavaFX configuration" in text:
                     raise AssertionError('cannot accept JavaFX "unnamed module": put JavaFX on the module path')
                 if "AT-SPI: Error retrieving accessibility bus address" in text:
