@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui;
 
-import com.github.martinfrancois.MainUi;
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
 import com.github.martinfrancois.ui.model.ConsoleLine;
 import javafx.collections.FXCollections;
@@ -39,7 +38,7 @@ class ConsoleViewTest {
             Scene scene = new Scene(console, 300, 100);
             // Without the application's font, a host with no fonts installed has none to lay the
             // lines out with.
-            MainUi.applyStyles(scene);
+            Styles.apply(scene);
             stage.setScene(scene);
             stage.show();
             layOut();

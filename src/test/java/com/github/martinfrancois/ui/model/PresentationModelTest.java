@@ -1,6 +1,5 @@
 package com.github.martinfrancois.ui.model;
 
-import com.github.martinfrancois.MainUi;
 import javafx.collections.ListChangeListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +39,7 @@ class PresentationModelTest {
 
     @BeforeEach
     void setUp() {
-        prefs = Preferences.userNodeForPackage(MainUi.class);
+        prefs = Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE);
         savedThemePreference = prefs.get(THEME_PREFERENCE_KEY, null);
         savedUserHome = System.getProperty("user.home");
         prefs.put(THEME_PREFERENCE_KEY, Theme.LIGHT.name());
@@ -243,5 +242,19 @@ class PresentationModelTest {
         model.updatePreferredTheme(Theme.LIGHT);
 
         assertThat(observed).containsExactly(Theme.DARK, Theme.LIGHT);
+    }
+
+    @Test
+    void readsTheThemeReleasedVersionsSaved() {
+        // Released versions saved the theme in the node of their window class's package,
+        // com.github.martinfrancois; reading another node would drop every user's saved theme.
+        // Both themes, so a theme detected from the operating system can't pass by chance.
+        Preferences released = Preferences.userRoot().node("/com/github/martinfrancois");
+
+        released.put(THEME_PREFERENCE_KEY, Theme.DARK.name());
+        assertThat(new PresentationModel().getTheme()).isEqualTo(Theme.DARK);
+
+        released.put(THEME_PREFERENCE_KEY, Theme.LIGHT.name());
+        assertThat(new PresentationModel().getTheme()).isEqualTo(Theme.LIGHT);
     }
 }

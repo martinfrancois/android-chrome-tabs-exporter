@@ -1,10 +1,8 @@
-package com.github.martinfrancois;
+package com.github.martinfrancois.ui;
 
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
-import com.github.martinfrancois.ui.ConsoleView;
-import com.github.martinfrancois.ui.ExportButton;
-import com.github.martinfrancois.ui.FxThreadConsole;
 import com.github.martinfrancois.ui.model.ConsoleLine;
+import com.github.martinfrancois.ui.model.PresentationModel;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
@@ -49,14 +47,14 @@ import java.util.prefs.Preferences;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Drives {@link MainUi} through the real JavaFX toolkit (headless via Monocle).
+ * Drives {@link ExporterApplication} through the real JavaFX toolkit (headless via Monocle).
  *
  * <p>A genuine {@link Stage} is shown, the real scene graph is built, the real stylesheet and
  * the real Material Symbols font resource are loaded, and buttons are fired through the real
  * event dispatch chain. Assertions read back through the property bindings that the production
  * code installed, so a broken binding fails the test rather than going unnoticed.
  */
-class MainUiTest {
+class ExporterApplicationTest {
 
     private static final String THEME_PREFERENCE_KEY = "themePreference";
     private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
@@ -64,21 +62,21 @@ class MainUiTest {
     private static String savedThemePreference;
     private static String savedUserHome;
 
-    private MainUi mainUi;
+    private ExporterApplication application;
     private Stage stage;
     private Scene scene;
 
     @BeforeAll
     static void bootToolkit() {
         JavaFxToolkit.startOnce();
-        Preferences prefs = Preferences.userNodeForPackage(MainUi.class);
+        Preferences prefs = Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE);
         savedThemePreference = prefs.get(THEME_PREFERENCE_KEY, null);
         savedUserHome = System.getProperty("user.home");
     }
 
     @AfterAll
     static void restorePreferences() throws BackingStoreException {
-        Preferences prefs = Preferences.userNodeForPackage(MainUi.class);
+        Preferences prefs = Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE);
         if (savedThemePreference == null) {
             prefs.remove(THEME_PREFERENCE_KEY);
         } else {
@@ -96,13 +94,13 @@ class MainUiTest {
     void showUi() {
         // A stored preference keeps these assertions independent of the host operating system's
         // theme. The no-preference path is covered by OsThemeDetectorLaunchTest.
-        Preferences.userNodeForPackage(MainUi.class).put(THEME_PREFERENCE_KEY, Theme.LIGHT.name());
+        Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE).put(THEME_PREFERENCE_KEY, Theme.LIGHT.name());
         System.setProperty("user.home", System.getProperty("java.io.tmpdir"));
 
         JavaFxToolkit.runAndWait(() -> {
-            mainUi = new MainUi();
+            application = new ExporterApplication();
             stage = new Stage();
-            mainUi.start(stage);
+            application.start(stage);
             scene = stage.getScene();
         });
     }
@@ -111,7 +109,7 @@ class MainUiTest {
     void hideUi() {
         JavaFxToolkit.runAndWait(() -> {
             try {
-                mainUi.stop();
+                application.stop();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -175,8 +173,8 @@ class MainUiTest {
     void loadsTheStylesheetThatShipsWithTheApplication() {
         assertThat(scene.getStylesheets()).hasSize(1);
         assertThat(scene.getStylesheets().getFirst()).endsWith("style.css");
-        assertThat(MainUi.class.getResource("style.css")).isNotNull();
-        assertThat(MainUi.class.getResource("MaterialSymbolsOutlined.ttf")).isNotNull();
+        assertThat(Styles.class.getResource("style.css")).isNotNull();
+        assertThat(Styles.class.getResource("MaterialSymbolsOutlined.ttf")).isNotNull();
     }
 
     @Test
@@ -350,7 +348,7 @@ class MainUiTest {
 
     @Test
     void whileTheModelExportsTheButtonSpinsWithEnoughContrastInBothThemes() {
-        JavaFxToolkit.runAndWait(() -> mainUi.model().startProgress());
+        JavaFxToolkit.runAndWait(() -> application.model().startProgress());
         Button export = buttonWithText(ExportButton.BUSY_TEXT);
 
         for (int toggle = 0; toggle < 2; toggle++) {
@@ -364,7 +362,7 @@ class MainUiTest {
         assertThat(scene.getRoot().getStyle()).isEqualTo("-fx-base: #d7d7d7;");
         assertThat(themeToggleButton().getText())
                 .as("light theme offers the switch-to-dark icon")
-                .isEqualTo(MainUi.ICON_CODEPOINT_DARK_MODE);
+                .isEqualTo(ThemeToggleButton.ICON_CODEPOINT_DARK_MODE);
     }
 
     @Test
@@ -374,32 +372,32 @@ class MainUiTest {
         JavaFxToolkit.runAndWait(toggle::fire);
 
         assertThat(scene.getRoot().getStyle()).isEqualTo("-fx-base: #121212;");
-        assertThat(toggle.getText()).isEqualTo(MainUi.ICON_CODEPOINT_LIGHT_MODE);
-        assertThat(Preferences.userNodeForPackage(MainUi.class).get(THEME_PREFERENCE_KEY, null))
+        assertThat(toggle.getText()).isEqualTo(ThemeToggleButton.ICON_CODEPOINT_LIGHT_MODE);
+        assertThat(Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE).get(THEME_PREFERENCE_KEY, null))
                 .as("the toggle must persist the user's choice")
                 .isEqualTo("DARK");
 
         JavaFxToolkit.runAndWait(toggle::fire);
 
         assertThat(scene.getRoot().getStyle()).isEqualTo("-fx-base: #d7d7d7;");
-        assertThat(toggle.getText()).isEqualTo(MainUi.ICON_CODEPOINT_DARK_MODE);
-        assertThat(Preferences.userNodeForPackage(MainUi.class).get(THEME_PREFERENCE_KEY, null))
+        assertThat(toggle.getText()).isEqualTo(ThemeToggleButton.ICON_CODEPOINT_DARK_MODE);
+        assertThat(Preferences.userRoot().node(PresentationModel.PREFERENCES_NODE).get(THEME_PREFERENCE_KEY, null))
                 .isEqualTo("LIGHT");
     }
 
     @Test
     void theTwoThemeIconsAreDistinctMaterialSymbolCodepoints() {
-        assertThat(MainUi.ICON_CODEPOINT_DARK_MODE).isNotEqualTo(MainUi.ICON_CODEPOINT_LIGHT_MODE);
-        assertThat(MainUi.ICON_CODEPOINT_LIGHT_MODE).isEqualTo("");
-        assertThat(MainUi.ICON_CODEPOINT_DARK_MODE).isEqualTo("");
+        assertThat(ThemeToggleButton.ICON_CODEPOINT_DARK_MODE).isNotEqualTo(ThemeToggleButton.ICON_CODEPOINT_LIGHT_MODE);
+        assertThat(ThemeToggleButton.ICON_CODEPOINT_LIGHT_MODE).isEqualTo("");
+        assertThat(ThemeToggleButton.ICON_CODEPOINT_DARK_MODE).isEqualTo("");
     }
 
     @Test
     void stoppingWithNoRunningExportIsANoOp() {
         JavaFxToolkit.runAndWait(() -> {
             try {
-                mainUi.stop();
-                mainUi.stop();
+                application.stop();
+                application.stop();
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }
@@ -451,8 +449,8 @@ class MainUiTest {
 
     @Test
     void exportConsoleMessagesFromABackgroundThreadReachTheConsoleInOrder() throws InterruptedException {
-        JavaFxToolkit.runAndWait(() -> mainUi.model().clearConsole());
-        FxThreadConsole exportConsole = new FxThreadConsole(mainUi.model());
+        JavaFxToolkit.runAndWait(() -> application.model().clearConsole());
+        FxThreadConsole exportConsole = new FxThreadConsole(application.model());
 
         Thread export = new Thread(() -> reportProgressThenError(exportConsole));
         export.start();

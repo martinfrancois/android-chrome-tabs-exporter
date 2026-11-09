@@ -12,10 +12,15 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.TreeSet;
 
-public class Main {
+/** Exports the tabs open in Chrome on the connected phone to an Excel file. */
+public final class TabsExporter {
     private static final String FILENAME_DATE_FORMAT = "yyyy-MM-dd";
     private static final String FILENAME_SUFFIX = " Android Tabs";
     private static final String DEFAULT_ADB_PORT = "50000";
+
+    private TabsExporter() {
+        throw new UnsupportedOperationException("TabsExporter is a utility class and should not be instantiated.");
+    }
 
     public static boolean export(String filePath, ExportConsole console) {
         try (AdbHandler adbHandler = new AdbHandler(console)) {

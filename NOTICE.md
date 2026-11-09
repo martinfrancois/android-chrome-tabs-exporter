@@ -5,7 +5,7 @@ here come from other projects and keep their own licenses.
 
 ## Material Symbols Outlined font
 
-`src/main/resources/com/github/martinfrancois/MaterialSymbolsOutlined.ttf`
+`src/main/resources/com/github/martinfrancois/ui/MaterialSymbolsOutlined.ttf`
 is the variable font "Material Symbols Outlined", version 2.719, copyright
 2020-2024 Google LLC. It draws the two theme toggle icons in the window.
 
