@@ -1,6 +1,7 @@
 package com.github.martinfrancois;
 
 import com.github.martinfrancois.ui.ConsoleView;
+import com.github.martinfrancois.ui.ExportButton;
 import com.github.martinfrancois.ui.model.PresentationModel;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.application.Application;
@@ -72,7 +73,7 @@ public class MainUi extends Application {
             }
         });
 
-        Button executeButton = new Button("Export Android Tabs");
+        Button executeButton = new ExportButton(model.inProgressProperty());
         executeButton.setOnAction(e -> {
             backgroundTask = createBackgroundTask();
             new Thread(backgroundTask).start();
@@ -170,6 +171,11 @@ public class MainUi extends Application {
             }
 
         };
+    }
+
+    /** The window's model, so tests can put the window into the state an export puts it in. */
+    PresentationModel model() {
+        return model;
     }
 
     @Override

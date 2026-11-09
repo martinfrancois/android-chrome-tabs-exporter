@@ -2,12 +2,14 @@ package com.github.martinfrancois;
 
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
 import com.github.martinfrancois.ui.ConsoleView;
+import com.github.martinfrancois.ui.ExportButton;
 import com.github.martinfrancois.ui.model.ConsoleLine;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.collections.FXCollections;
 import javafx.css.PseudoClass;
 import javafx.event.Event;
 import javafx.geometry.HPos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -23,6 +25,10 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Paint;
+import javafx.scene.paint.Stop;
+import javafx.scene.shape.Arc;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -176,7 +182,7 @@ class MainUiTest {
     void layoutContainsEveryControlTheUserNeeds() {
         assertThat(find(Label.class, 0).getText()).isEqualTo("Export directory:");
         assertThat(buttonWithText("Choose Directory")).isNotNull();
-        assertThat(buttonWithText("Export Android Tabs")).isNotNull();
+        assertThat(buttonWithText(ExportButton.IDLE_TEXT)).isNotNull();
         assertThat(buttonWithText("Clear Console")).isNotNull();
         assertThat(console().getContextMenu().getItems()).extracting(MenuItem::getText).containsExactly("Copy");
         assertThat(directoryField().isEditable()).isFalse();
@@ -334,10 +340,22 @@ class MainUiTest {
 
     @Test
     void exportButtonIsEnabledOnlyWhileADirectoryIsSetAndNoExportIsRunning() {
-        Button export = buttonWithText("Export Android Tabs");
+        Button export = buttonWithText(ExportButton.IDLE_TEXT);
 
+        assertThat(export).isInstanceOf(ExportButton.class);
         assertThat(export.disableProperty().isBound()).isTrue();
         assertThat(export.isDisabled()).isFalse();
+    }
+
+    @Test
+    void whileTheModelExportsTheButtonSpinsWithEnoughContrastInBothThemes() {
+        JavaFxToolkit.runAndWait(() -> mainUi.model().startProgress());
+        Button export = buttonWithText(ExportButton.BUSY_TEXT);
+
+        for (int toggle = 0; toggle < 2; toggle++) {
+            JavaFxToolkit.runAndWait(() -> assertSpinnerContrast(export));
+            JavaFxToolkit.runAndWait(themeToggleButton()::fire);
+        }
     }
 
     @Test
@@ -420,7 +438,7 @@ class MainUiTest {
         System.setProperty("https.proxyHost", "127.0.0.1");
         System.setProperty("https.proxyPort", "1");
         try {
-            JavaFxToolkit.runAndWait(() -> buttonWithText("Export Android Tabs").fire());
+            JavaFxToolkit.runAndWait(() -> buttonWithText(ExportButton.IDLE_TEXT).fire());
 
             waitUntilOnFxThread(this::exportHasFinished);
             JavaFxToolkit.runAndWait(this::assertFailedExportReported);
@@ -432,15 +450,26 @@ class MainUiTest {
 
     private boolean exportHasFinished() {
         return consoleTexts().contains("-----------------")
-                && !buttonWithText("Export Android Tabs").isDisabled();
+                && !buttonWithText(ExportButton.IDLE_TEXT).isDisabled();
     }
 
     private void assertFailedExportReported() {
         assertThat(consoleTexts()).contains("Exporting Android Tabs...", "-----------------");
         assertThat(console().getItems()).anyMatch(ConsoleLine::error);
-        assertThat(buttonWithText("Export Android Tabs").isDisabled())
+        assertThat(buttonWithText(ExportButton.IDLE_TEXT).isDisabled())
                 .as("the export button must be re-enabled once the task finishes")
                 .isFalse();
+    }
+
+    private void assertSpinnerContrast(Button export) {
+        layOut();
+        Arc arc = (Arc) ((Group) export.getGraphic()).getChildren().getLast();
+        assertThat(arc.getStroke()).as("the spinner has a color").isInstanceOf(Color.class);
+        for (Color body : colorsOf(export.getBackground().getFills().getLast().getFill())) {
+            assertThat(contrast((Color) arc.getStroke(), body))
+                    .as("spinner contrast against the button in " + scene.getRoot().getStyle())
+                    .isGreaterThanOrEqualTo(3.0);
+        }
     }
 
     private void layOut() {
@@ -464,6 +493,14 @@ class MainUiTest {
     private static Color backgroundOf(ListCell<?> cell) {
         List<BackgroundFill> fills = cell.getBackground().getFills();
         return (Color) fills.getLast().getFill();
+    }
+
+    /** The colors a fill paints with: every stop of a gradient, so a check covers its whole range. */
+    private static List<Color> colorsOf(Paint fill) {
+        if (fill instanceof LinearGradient gradient) {
+            return gradient.getStops().stream().map(Stop::getColor).toList();
+        }
+        return List.of((Color) fill);
     }
 
     /** WCAG 2.2 contrast ratio of two opaque colors. */
