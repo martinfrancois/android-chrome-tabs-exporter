@@ -1,15 +1,27 @@
 package com.github.martinfrancois;
 
 import com.github.martinfrancois.testsupport.JavaFxToolkit;
+import com.github.martinfrancois.ui.ConsoleView;
+import com.github.martinfrancois.ui.model.ConsoleLine;
 import com.github.martinfrancois.ui.model.Theme;
+import javafx.collections.FXCollections;
+import javafx.css.PseudoClass;
+import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextField;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -39,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MainUiTest {
 
     private static final String THEME_PREFERENCE_KEY = "themePreference";
+    private static final PseudoClass ERROR = PseudoClass.getPseudoClass("error");
 
     private static String savedThemePreference;
     private static String savedUserHome;
@@ -127,8 +140,12 @@ class MainUiTest {
                 .orElseThrow(() -> new AssertionError("no theme toggle button"));
     }
 
-    private TextArea console() {
-        return find(TextArea.class, 0);
+    private ConsoleView console() {
+        return find(ConsoleView.class, 0);
+    }
+
+    private List<String> consoleTexts() {
+        return console().getItems().stream().map(ConsoleLine::text).toList();
     }
 
     private TextField directoryField() {
@@ -159,7 +176,7 @@ class MainUiTest {
         assertThat(find(Label.class, 0).getText()).isEqualTo("Export directory:");
         assertThat(buttonWithText("Choose Directory")).isNotNull();
         assertThat(buttonWithText("Export Android Tabs")).isNotNull();
-        assertThat(console().isEditable()).isFalse();
+        assertThat(console().getContextMenu().getItems()).extracting(MenuItem::getText).containsExactly("Copy");
         assertThat(directoryField().isEditable()).isFalse();
     }
 
@@ -170,10 +187,134 @@ class MainUiTest {
     }
 
     @Test
-    void consoleIsBoundToTheModelAndAlreadyReportsTheChosenDirectory() {
-        assertThat(console().textProperty().isBound()).isTrue();
-        assertThat(console().getText())
-                .isEqualTo("Selected directory: " + System.getProperty("java.io.tmpdir"));
+    void consoleShowsTheModelsLinesAndAlreadyReportsTheChosenDirectory() {
+        assertThat(consoleTexts())
+                .containsExactly("Selected directory: " + System.getProperty("java.io.tmpdir"));
+    }
+
+    @Test
+    void errorLinesAreRedWithEnoughContrastInBothThemes() {
+        JavaFxToolkit.runAndWait(() -> showLines(
+                new ConsoleLine("Exporting Android Tabs...", false),
+                new ConsoleLine("ERROR: No android device found.", true)));
+
+        for (int toggle = 0; toggle < 2; toggle++) {
+            JavaFxToolkit.runAndWait(() -> {
+                layOut();
+                ListCell<?> error = cellShowing("ERROR: No android device found.");
+                ListCell<?> plain = cellShowing("Exporting Android Tabs...");
+                Color text = (Color) error.getTextFill();
+                Color background = backgroundOf(error);
+
+                assertThat(error.getPseudoClassStates()).contains(ERROR);
+                assertThat(plain.getPseudoClassStates()).doesNotContain(ERROR);
+                assertThat(text.getRed()).as("error text is red").isGreaterThan(text.getGreen() + 0.25);
+                assertThat(contrast(text, background))
+                        .as("error text contrast (WCAG AAA for small text) in " + scene.getRoot().getStyle())
+                        .isGreaterThanOrEqualTo(7.0);
+                assertThat(contrast((Color) plain.getTextFill(), background))
+                        .as("plain text contrast in " + scene.getRoot().getStyle())
+                        .isGreaterThanOrEqualTo(7.0);
+                assertThat(backgroundOf(plain)).as("rows aren't striped").isEqualTo(background);
+            });
+            JavaFxToolkit.runAndWait(themeToggleButton()::fire);
+        }
+    }
+
+    @Test
+    void longLinesWrapInsteadOfRunningPastTheConsolesEdge() {
+        JavaFxToolkit.runAndWait(() -> {
+            showLines(new ConsoleLine("short", false), new ConsoleLine("long ".repeat(100), true));
+            layOut();
+            ListCell<?> shortCell = cellShowing("short");
+            ListCell<?> longCell = cellShowing("long ".repeat(100));
+
+            assertThat(longCell.getWidth()).isLessThanOrEqualTo(console().getWidth());
+            assertThat(longCell.getHeight()).isGreaterThan(2 * shortCell.getHeight());
+        });
+    }
+
+    @Test
+    void selectedLinesStandOutAndKeepEnoughContrastInBothThemesWithAndWithoutFocus() {
+        for (int toggle = 0; toggle < 2; toggle++) {
+            JavaFxToolkit.runAndWait(() -> {
+                showLines(new ConsoleLine("plain", false), new ConsoleLine("ERROR: failed", true),
+                        new ConsoleLine("not selected", false));
+                console().getSelectionModel().selectRange(0, 2);
+                for (boolean focused : new boolean[]{true, false}) {
+                    if (focused) {
+                        console().requestFocus();
+                    } else {
+                        buttonWithText("Choose Directory").requestFocus();
+                    }
+                    layOut();
+                    assertThat(console().isFocused()).isEqualTo(focused);
+                    for (String line : List.of("plain", "ERROR: failed")) {
+                        ListCell<?> cell = cellShowing(line);
+                        String state = line + " selected, focused " + focused + ", " + scene.getRoot().getStyle();
+                        assertThat(contrast((Color) cell.getTextFill(), backgroundOf(cell)))
+                                .as("text contrast of " + state)
+                                .isGreaterThanOrEqualTo(7.0);
+                        assertThat(contrast(backgroundOf(cell), backgroundOf(cellShowing("not selected"))))
+                                .as("contrast against an unselected row of " + state)
+                                .isGreaterThanOrEqualTo(3.0);
+                    }
+                }
+            });
+            JavaFxToolkit.runAndWait(themeToggleButton()::fire);
+        }
+    }
+
+    @Test
+    void selectingAnOddRowHighlightsIt() {
+        JavaFxToolkit.runAndWait(() -> {
+            showLines(new ConsoleLine("zero", false), new ConsoleLine("one", false), new ConsoleLine("two", false));
+            console().getSelectionModel().select(1);
+            layOut();
+
+            assertThat(backgroundOf(cellShowing("one"))).isNotEqualTo(backgroundOf(cellShowing("two")));
+        });
+    }
+
+    @Test
+    void copyPutsTheSelectedLinesOnTheClipboardInConsoleOrder() {
+        JavaFxToolkit.runAndWait(() -> {
+            showLines(new ConsoleLine("first", false), new ConsoleLine("ERROR: second", true));
+            console().getSelectionModel().select(1);
+            console().getSelectionModel().select(0);
+            console().getContextMenu().getItems().getFirst().fire();
+
+            assertThat(Clipboard.getSystemClipboard().getString()).isEqualTo("first\nERROR: second");
+        });
+    }
+
+    @Test
+    void theCopyShortcutCopiesTheSelectedLines() {
+        JavaFxToolkit.runAndWait(() -> {
+            showLines(new ConsoleLine("first", false), new ConsoleLine("second", false));
+            console().getSelectionModel().select(1);
+            // Ctrl is the shortcut key off macOS, and the tests run on Linux.
+            KeyEvent copy = new KeyEvent(KeyEvent.KEY_PRESSED, "", "", KeyCode.C, false, true, false, false);
+
+            Event.fireEvent(console(), copy);
+
+            assertThat(Clipboard.getSystemClipboard().getString()).isEqualTo("second");
+        });
+    }
+
+    @Test
+    void copyingWithNothingSelectedLeavesTheClipboardAlone() {
+        JavaFxToolkit.runAndWait(() -> {
+            ClipboardContent earlier = new ClipboardContent();
+            earlier.putString("earlier");
+            Clipboard.getSystemClipboard().setContent(earlier);
+            showLines(new ConsoleLine("first", false));
+            console().getSelectionModel().clearSelection();
+
+            console().getContextMenu().getItems().getFirst().fire();
+
+            assertThat(Clipboard.getSystemClipboard().getString()).isEqualTo("earlier");
+        });
     }
 
     @Test
@@ -275,19 +416,54 @@ class MainUiTest {
     }
 
     private boolean exportHasFinished() {
-        String text = console().getText();
-        return text != null && text.contains("-----------------")
+        return consoleTexts().contains("-----------------")
                 && !buttonWithText("Export Android Tabs").isDisabled();
     }
 
     private void assertFailedExportReported() {
-        assertThat(console().getText())
-                .contains("Exporting Android Tabs...")
-                .contains("ERROR:")
-                .contains("-----------------");
+        assertThat(consoleTexts()).contains("Exporting Android Tabs...", "-----------------");
+        assertThat(console().getItems()).anyMatch(ConsoleLine::error);
         assertThat(buttonWithText("Export Android Tabs").isDisabled())
                 .as("the export button must be re-enabled once the task finishes")
                 .isFalse();
+    }
+
+    private void layOut() {
+        scene.getRoot().applyCss();
+        scene.getRoot().layout();
+    }
+
+    /** Replaces the console's lines, so a test needs no failing export to show an error. */
+    private void showLines(ConsoleLine... lines) {
+        console().setItems(FXCollections.observableArrayList(lines));
+    }
+
+    private ListCell<?> cellShowing(String text) {
+        return console().lookupAll(".list-cell").stream()
+                .map(ListCell.class::cast)
+                .filter(cell -> text.equals(cell.getText()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no console row shows " + text));
+    }
+
+    private static Color backgroundOf(ListCell<?> cell) {
+        List<BackgroundFill> fills = cell.getBackground().getFills();
+        return (Color) fills.getLast().getFill();
+    }
+
+    /** WCAG 2.2 contrast ratio of two opaque colors. */
+    private static double contrast(Color first, Color second) {
+        double lighter = Math.max(luminance(first), luminance(second));
+        double darker = Math.min(luminance(first), luminance(second));
+        return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private static double luminance(Color color) {
+        return 0.2126 * linear(color.getRed()) + 0.7152 * linear(color.getGreen()) + 0.0722 * linear(color.getBlue());
+    }
+
+    private static double linear(double channel) {
+        return channel <= 0.04045 ? channel / 12.92 : Math.pow((channel + 0.055) / 1.055, 2.4);
     }
 
     private static void restoreProperty(String key, String value) {
