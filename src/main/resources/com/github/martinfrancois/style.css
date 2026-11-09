@@ -3,3 +3,28 @@
     -fx-font-size: 18px;
     -fx-cursor: hand;
 }
+
+/*
+ * The dark theme's default input background is a mid gray on which no text color reaches 7:1,
+ * so the console gets a dark background there. The light theme keeps the default.
+ */
+.console {
+    -fx-control-inner-background: ladder(-fx-base, #1e1e1e 49%, derive(-fx-base, 80%) 50%);
+    /* The console is one log, not a table, so its rows aren't striped. */
+    -fx-control-inner-background-alt: -fx-control-inner-background;
+    /*
+     * Selected rows need 7:1 for their text and 3:1 against the other rows, with and without focus.
+     * The defaults miss both, and no single color passes on the light and the dark background.
+     */
+    -fx-selection-bar: ladder(-fx-control-inner-background, #8ecaff 49%, #00508f 50%);
+    -fx-selection-bar-non-focused: ladder(-fx-control-inner-background, #c8c8c8 49%, #555555 50%);
+}
+
+/* ladder picks the light red on a dark row and the dark red on a light one. */
+.console .list-cell:error {
+    -fx-text-fill: ladder(-fx-background, #ff9e9e 49%, #a00000 50%);
+}
+
+.console .list-cell:error:selected {
+    -fx-text-fill: -fx-selection-bar-text;
+}

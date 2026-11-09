@@ -4,6 +4,8 @@ import com.github.martinfrancois.MainUi;
 import com.jthemedetecor.OsThemeDetector;
 import javafx.application.Platform;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -16,7 +18,8 @@ public class PresentationModel {
     private static final String THEME_PREFERENCE_KEY = "themePreference";
 
     private final StringProperty path = new SimpleStringProperty(PATH_PLACEHOLDER);
-    private final StringProperty console = new SimpleStringProperty();
+    private final ObservableList<ConsoleLine> consoleLines = FXCollections.observableArrayList();
+    private final ObservableList<ConsoleLine> readOnlyConsoleLines = FXCollections.unmodifiableObservableList(consoleLines);
     private final BooleanProperty pathSet = new SimpleBooleanProperty();
     private final BooleanProperty inProgress = new SimpleBooleanProperty();
     private final BooleanProperty executable = new SimpleBooleanProperty();
@@ -89,16 +92,12 @@ public class PresentationModel {
     }
 
     public void appendConsoleText(String appendText) {
-        String consoleText = getConsole();
-        if(consoleText == null || consoleText.isEmpty()) {
-            setConsole(appendText);
-        } else {
-            setConsole(consoleText + "\n" + appendText);
-        }
+        consoleLines.add(new ConsoleLine(appendText, false));
     }
 
     public void appendConsoleError(String appendError) {
-        appendConsoleText("ERROR: " + appendError);
+        // The prefix keeps errors recognizable without relying on their color.
+        consoleLines.add(new ConsoleLine("ERROR: " + appendError, true));
     }
 
     public void startProgress() {
@@ -123,16 +122,8 @@ public class PresentationModel {
         this.path.set(path);
     }
 
-    private String getConsole() {
-        return console.get();
-    }
-
-    public StringProperty consoleProperty() {
-        return console;
-    }
-
-    private void setConsole(String console) {
-        this.console.set(console);
+    public ObservableList<ConsoleLine> getConsoleLines() {
+        return readOnlyConsoleLines;
     }
 
     private boolean isPathSet() {

@@ -1,6 +1,7 @@
 package com.github.martinfrancois.ui.model;
 
 import com.github.martinfrancois.MainUi;
+import javafx.collections.ListChangeListener;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,7 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Exercises {@link PresentationModel} against the real JavaFX property/binding engine and the
@@ -67,7 +69,7 @@ class PresentationModelTest {
 
         assertThat(model.getPath()).isEqualTo("/home/tester");
         assertThat(model.pathProperty().get()).isEqualTo("/home/tester");
-        assertThat(model.consoleProperty().get()).isEqualTo("Selected directory: /home/tester");
+        assertThat(texts(model)).containsExactly("Selected directory: /home/tester");
     }
 
     @Test
@@ -91,7 +93,7 @@ class PresentationModelTest {
         assertThat(model.executableProperty().get())
                 .as("export must stay disabled until a directory is chosen")
                 .isFalse();
-        assertThat(model.consoleProperty().get()).isNull();
+        assertThat(model.getConsoleLines()).isEmpty();
     }
 
     @Test
@@ -103,7 +105,7 @@ class PresentationModelTest {
         model.updatePath("");
 
         assertThat(model.getPath()).isEqualTo("/home/tester");
-        assertThat(model.consoleProperty().get()).isEqualTo("Selected directory: /home/tester");
+        assertThat(texts(model)).containsExactly("Selected directory: /home/tester");
     }
 
     @Test
@@ -114,8 +116,8 @@ class PresentationModelTest {
         model.updatePath("/tmp/exports");
 
         assertThat(model.getPath()).isEqualTo("/tmp/exports");
-        assertThat(model.consoleProperty().get()).isEqualTo(
-                "Selected directory: /home/tester\nSelected directory: /tmp/exports");
+        assertThat(texts(model)).containsExactly(
+                "Selected directory: /home/tester", "Selected directory: /tmp/exports");
     }
 
     @Test
@@ -141,32 +143,11 @@ class PresentationModelTest {
         model.appendConsoleText("Found 3 tabs.");
         model.stopProgress();
 
-        assertThat(model.consoleProperty().get().lines()).containsExactly(
+        assertThat(texts(model)).containsExactly(
                 "Selected directory: /home/tester",
                 "Exporting Android Tabs...",
                 "Found 3 tabs.",
                 "-----------------");
-    }
-
-    @Test
-    void firstConsoleLineIsNotPrefixedWithANewline() {
-        System.setProperty("user.home", "");
-        PresentationModel model = new PresentationModel();
-
-        model.appendConsoleText("first");
-
-        assertThat(model.consoleProperty().get()).isEqualTo("first");
-    }
-
-    @Test
-    void appendingToAnEmptyConsoleDoesNotIntroduceABlankLine() {
-        System.setProperty("user.home", "");
-        PresentationModel model = new PresentationModel();
-        model.appendConsoleText("");
-
-        model.appendConsoleText("second");
-
-        assertThat(model.consoleProperty().get()).isEqualTo("second");
     }
 
     @Test
@@ -177,22 +158,39 @@ class PresentationModelTest {
         model.appendConsoleError("No android device found.");
         model.appendConsoleText("plain line");
 
-        assertThat(model.consoleProperty().get().lines()).containsExactly(
-                "ERROR: No android device found.",
-                "plain line");
+        assertThat(model.getConsoleLines()).containsExactly(
+                new ConsoleLine("ERROR: No android device found.", true),
+                new ConsoleLine("plain line", false));
     }
 
     @Test
-    void consolePropertyNotifiesListenersOnEveryAppend() {
+    void consoleLinesNotifyListenersOnEveryAppend() {
         System.setProperty("user.home", "");
         PresentationModel model = new PresentationModel();
         List<String> observed = new ArrayList<>();
-        model.consoleProperty().addListener((observable, oldValue, newValue) -> observed.add(newValue));
+        model.getConsoleLines().addListener((ListChangeListener<ConsoleLine>) change -> observed.add(lastText(change)));
 
         model.appendConsoleText("one");
         model.appendConsoleText("two");
 
-        assertThat(observed).containsExactly("one", "one\ntwo");
+        assertThat(observed).containsExactly("one", "two");
+    }
+
+    @Test
+    void consoleLinesCannotBeChangedOutsideTheModel() {
+        PresentationModel model = new PresentationModel();
+
+        assertThatThrownBy(() -> model.getConsoleLines().clear())
+                .isInstanceOf(UnsupportedOperationException.class);
+    }
+
+    private static List<String> texts(PresentationModel model) {
+        return model.getConsoleLines().stream().map(ConsoleLine::text).toList();
+    }
+
+    private static String lastText(ListChangeListener.Change<? extends ConsoleLine> change) {
+        change.next();
+        return change.getAddedSubList().getLast().text();
     }
 
     @ParameterizedTest

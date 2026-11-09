@@ -1,5 +1,6 @@
 package com.github.martinfrancois;
 
+import com.github.martinfrancois.ui.ConsoleView;
 import com.github.martinfrancois.ui.model.PresentationModel;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.application.Application;
@@ -11,7 +12,6 @@ import javafx.geometry.VPos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -81,9 +81,7 @@ public class MainUi extends Application {
         GridPane.setHgrow(executeButton, Priority.ALWAYS); // This makes the button grow horizontally
 
         // Console setup
-        TextArea console = new TextArea();
-        console.setEditable(false);
-        console.textProperty().bind(model.consoleProperty());
+        ConsoleView console = new ConsoleView(model.getConsoleLines());
         GridPane.setVgrow(console, Priority.ALWAYS); // Console grows vertically
         GridPane.setHgrow(console, Priority.ALWAYS); // Console grows horizontally to take up available space
         console.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE); // Allow console to grow
