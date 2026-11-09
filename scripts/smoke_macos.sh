@@ -3,6 +3,8 @@
 # it and waits for its window, then stops it and removes it.
 # Run on a macOS CI runner. A window's title needs the screen recording permission, which a runner
 # does not grant, so the check looks for an on-screen window that the application's process owns.
+# JavaFX logs "Timeout while waiting for app reactivation" on a runner because the runner's session
+# never activates the application; the window still opens, so the log check does not fail on it.
 set -euo pipefail
 
 if [ "$#" -ne 1 ]; then

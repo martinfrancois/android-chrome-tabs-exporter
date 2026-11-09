@@ -126,7 +126,12 @@ jobs:
           name: installers-linux
           path: installers
 
-      # makepkg refuses to run as root, which is the container's user.
+      # Syncing the package databases first also keeps makepkg from warning that they are missing.
+      - name: Install the display for the launch check
+        run: pacman -Syu --noconfirm --needed python xorg-server-xvfb xorg-xauth xorg-xwininfo at-spi2-core dbus
+
+      # makepkg refuses to run as root, which is the container's user. --nodeps builds without the
+      # runtime dependencies installed; pacman installs them with the package in the next step.
       - name: Build the Arch package from the app image
         env:
           VERSION: ${{ inputs.version }}
@@ -141,7 +146,6 @@ jobs:
 
       - name: Install the package and open the application
         run: |
-          pacman -Syu --noconfirm --needed python xorg-server-xvfb xorg-xauth xorg-xwininfo at-spi2-core dbus
           pacman -U --noconfirm arch/android-chrome-tabs-exporter-arch-x86_64.pkg.tar.zst
           dbus-run-session -- xvfb-run -a python scripts/smoke_distribution.py --launcher /usr/bin/android-chrome-tabs-exporter
 
