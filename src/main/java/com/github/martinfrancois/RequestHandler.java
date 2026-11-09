@@ -29,7 +29,7 @@ public class RequestHandler {
                 Main.updateError.accept("HTTP Request failed with status code: " + response.statusCode());
             }
         } catch (Exception e) {
-            Main.updateError.accept("Failed to connect to the phone. Make sure your phone is plugged in, unlocked, USB debugging is enabled, you allowed USB debugging and the Chrome app is open. You can also try reconnecting your phone if none of this helps.");
+            Main.updateError.accept("Failed to connect to the phone. " + AdbHandler.CONNECTION_CHECKLIST + " You can also try reconnecting your phone if none of this helps.");
             throw new RuntimeException(e);
         }
         return null;

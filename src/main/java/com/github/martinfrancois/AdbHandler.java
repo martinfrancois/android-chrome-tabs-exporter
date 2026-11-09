@@ -24,6 +24,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class AdbHandler implements AutoCloseable {
+    /** What to check when the phone can't be reached; shared by the retry and the final connection error. */
+    static final String CONNECTION_CHECKLIST = "Make sure your phone is plugged in and unlocked, USB debugging is enabled, you allowed USB debugging and the Chrome app is open.";
+
     private static final String PLATFORM_TOOLS_PREFIX = "https://dl.google.com/android/repository/platform-tools-latest-";
     private final File adbExecutable;
     private Process process;
@@ -113,7 +116,7 @@ public class AdbHandler implements AutoCloseable {
                 int exitCode = process.waitFor();
 
                 if (error.contains("no devices/emulators found")) {
-                    Main.updateError.accept("No android device found. Make sure your phone is plugged in, USB debugging is enabled and you allowed USB debugging. Retrying in 3 seconds...");
+                    Main.updateError.accept("No android device found. " + CONNECTION_CHECKLIST + " If it is still not found, unplug the cable and plug it in again, or try another USB port or another USB cable. Retrying in 3 seconds...");
                     retry();
                 } else if (error.contains("cannot bind listener: Address already in use")) {
                     String nextPort = String.valueOf(Integer.parseInt(adbPort) + 1);

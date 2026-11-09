@@ -235,6 +235,10 @@ class AdbHandlerTest {
         // The real adb binary really answers "no devices/emulators found" on this machine.
         waitUntil(() -> console.anyErrorContains("No android device found"));
         assertThat(console.anyErrorContains("Retrying in 3 seconds...")).isTrue();
+        assertThat(console.errors())
+                .filteredOn(message -> message.startsWith("No android device found"))
+                .first().asString()
+                .contains("plugged in and unlocked", "the Chrome app is open", "unplug the cable and plug it in again", "another USB port", "another USB cable");
 
         // The retry loop is unbounded by design, so interrupting it is the only way out.
         worker.interrupt();
