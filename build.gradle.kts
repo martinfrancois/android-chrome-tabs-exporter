@@ -266,9 +266,11 @@ tasks.register<Exec>("jpackage") {
         )
         // Installer options are rejected for an app image, which is only the application directory.
         if (installerType.get() != "app-image") {
-            arguments += listOf("--license-file", file("LICENSE").absolutePath)
             when {
+                // The Linux packages install the license as their copyright file. The .msi and .dmg
+                // get none: there it becomes a license agreement to accept, which MIT does not need.
                 os.isLinux -> arguments += listOf(
+                    "--license-file", file("LICENSE").absolutePath,
                     "--linux-shortcut",
                     "--linux-menu-group", "Utility",
                     "--linux-deb-maintainer", "f.martin@fastmail.com",

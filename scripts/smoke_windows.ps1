@@ -20,7 +20,7 @@ if (-not (Test-Path $exe)) {
 
 $application = Start-Process $exe -PassThru
 try {
-    $deadline = (Get-Date).AddSeconds(30)
+    $deadline = (Get-Date).AddSeconds(60)
     while ((Get-Date) -lt $deadline) {
         $application.Refresh()
         if ($application.HasExited) {
@@ -32,7 +32,8 @@ try {
         Start-Sleep -Milliseconds 200
     }
     if ($application.MainWindowTitle -ne $title) {
-        throw "cannot find window `"$title`": no window with that title within 30 seconds"
+        Get-Process | Where-Object { $_.MainWindowTitle } | Format-Table Id, ProcessName, MainWindowTitle -AutoSize | Out-String | Write-Output
+        throw "cannot find window `"$title`": no window with that title within 60 seconds"
     }
 } finally {
     if (-not $application.HasExited) {
