@@ -100,6 +100,10 @@ public class PresentationModel {
         consoleLines.add(new ConsoleLine("ERROR: " + appendError, true));
     }
 
+    public void clearConsole() {
+        consoleLines.clear();
+    }
+
     public void startProgress() {
         setInProgress(true);
         appendConsoleText("Exporting Android Tabs...");

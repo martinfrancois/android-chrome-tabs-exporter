@@ -5,6 +5,7 @@ import com.github.martinfrancois.ui.model.PresentationModel;
 import com.github.martinfrancois.ui.model.Theme;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.concurrent.Task;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
@@ -86,6 +87,11 @@ public class MainUi extends Application {
         GridPane.setHgrow(console, Priority.ALWAYS); // Console grows horizontally to take up available space
         console.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE); // Allow console to grow
 
+        Button clearButton = new Button("Clear Console");
+        clearButton.setOnAction(e -> model.clearConsole());
+        clearButton.disableProperty().bind(Bindings.isEmpty(model.getConsoleLines()));
+        GridPane.setHalignment(clearButton, HPos.RIGHT); // Right below the console it clears
+
         // Theme toggle button setup
         Button themeToggleButton = new Button();
         themeToggleButton.setStyle("-fx-background-color: transparent;");
@@ -102,21 +108,26 @@ public class MainUi extends Application {
         grid.add(chooseDirButton, 1, 1);
         grid.add(executeButton, 0, 2, 2, 1); // Execute button spans two columns
         grid.add(console, 0, 3, 2, 1); // Console spans two columns and grows
+        grid.add(clearButton, 1, 4);
 
         root.setCenter(grid);
 
         Scene scene = new Scene(root, 800, 450);
 
         // Load the CSS file
-        Font.loadFont(getClass().getResourceAsStream("MaterialSymbolsOutlined.ttf"), 24); // workaround for error: "Could not load @font-face font"
-        String css = this.getClass().getResource("style.css").toExternalForm();
-        scene.getStylesheets().add(css);
+        applyStyles(scene);
 
         primaryStage.setScene(scene);
         primaryStage.show();
 
         model.themeProperty().addListener((observable, oldValue, newValue) -> applyTheme(scene, themeToggleButton, newValue));
         applyTheme(scene, themeToggleButton, model.getTheme()); // initially apply theme
+    }
+
+    /** Loads the application's font and stylesheet into scene. */
+    public static void applyStyles(Scene scene) {
+        Font.loadFont(MainUi.class.getResourceAsStream("MaterialSymbolsOutlined.ttf"), 24); // workaround for error: "Could not load @font-face font"
+        scene.getStylesheets().add(MainUi.class.getResource("style.css").toExternalForm());
     }
 
     private void applyTheme(Scene scene, Button button, Theme theme) {

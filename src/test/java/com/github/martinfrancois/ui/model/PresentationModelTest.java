@@ -177,6 +177,18 @@ class PresentationModelTest {
     }
 
     @Test
+    void clearingTheConsoleRemovesEveryLine() {
+        System.setProperty("user.home", "");
+        PresentationModel model = new PresentationModel();
+        model.appendConsoleText("one");
+        model.appendConsoleError("two");
+
+        model.clearConsole();
+
+        assertThat(model.getConsoleLines()).isEmpty();
+    }
+
+    @Test
     void consoleLinesCannotBeChangedOutsideTheModel() {
         PresentationModel model = new PresentationModel();
 
