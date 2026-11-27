@@ -25,7 +25,7 @@ dependencies {
     implementation("org.apache.poi:poi:6.0.0") // Apache POI for Excel
     implementation("org.apache.poi:poi-ooxml:6.0.0") // Apache POI for Excel OOXML format
     implementation("net.lingala.zip4j:zip4j:2.11.6") // Zip file processing
-    implementation("org.springframework:spring-web:7.0.10") // Unescaping HTML
+    implementation("org.springframework:spring-web:7.1.0") // Unescaping HTML
 
     // OS handling.
     //
